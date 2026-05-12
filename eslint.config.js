@@ -5,19 +5,18 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import prettierPlugin from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import tseslint from 'typescript-eslint';
-import { defineConfig, globalIgnores } from 'eslint/config';
 
-export default defineConfig([
-  globalIgnores(['dist']),
+export default [
+  {
+    ignores: ['dist'],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  reactHooks.configs.flat.recommended,
+  reactRefresh.configs.vite,
+  prettierConfig,
   {
     files: ['**/*.{ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      ...tseslint.configs.recommended,
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
-      prettierConfig,
-    ],
     languageOptions: {
       globals: globals.browser,
     },
@@ -28,4 +27,4 @@ export default defineConfig([
       'prettier/prettier': 'error',
     },
   },
-]);
+];
