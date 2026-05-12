@@ -9,6 +9,7 @@
 - TypeScript (strict)
 - Vite
 - Tailwind CSS v3
+- @vapor-ui/core (Vapor UI)
 - @monaco-editor/react
 - @tanstack/react-query v5
 - zustand
