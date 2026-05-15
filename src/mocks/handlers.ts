@@ -7,6 +7,9 @@ export const handlers = [
   http.post('/auth/signup', async () => {
     return HttpResponse.json({ message: 'signup success' }, { status: 201 });
   }),
+  http.get('/auth/me', async () => {
+    return HttpResponse.json({ id: 'user-1', name: 'Test User' }, { status: 200 });
+  }),
   http.get('/rooms', async () => {
     return HttpResponse.json(
       {
