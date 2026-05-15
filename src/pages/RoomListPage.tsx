@@ -6,10 +6,13 @@ import { Button, Spinner } from '@vapor-ui/core';
 import { useRoomStore } from '@/stores/roomStore';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+
 import CreateRoomModal from '@/components/room/CreateRoomModal';
+import JoinRoomModal from '@/components/room/JoinRoomModal';
 
 export default function RoomListPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false);
   const { setRoom } = useRoomStore();
   const navigate = useNavigate();
 
@@ -30,6 +33,7 @@ export default function RoomListPage() {
       <div className="flex justify-center items-center mb-6">
         <h1>강의 목록</h1>
         <Button onClick={() => setCreateModalOpen(true)}>강의 생성</Button>
+        <Button onClick={() => setJoinModalOpen(true)}>강의 참여</Button>
       </div>
       <div className="p-6 grid grid-cols-3 gap-4">
         {data?.map((room) => (
@@ -37,6 +41,7 @@ export default function RoomListPage() {
         ))}
       </div>
       <CreateRoomModal isOpen={createModalOpen} onIsOpenChange={setCreateModalOpen} />
+      <JoinRoomModal isOpen={joinModalOpen} onIsOpenChange={setJoinModalOpen} />
     </div>
   );
 }
