@@ -5,3 +5,10 @@ export interface RoomMember {
   name: string;
   role: RoomRole;
 }
+
+export interface Room {
+  id: string;
+  name: string;
+  memberCount: number;
+  myRole: RoomRole;
+}

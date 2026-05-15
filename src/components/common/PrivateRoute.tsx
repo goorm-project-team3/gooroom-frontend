@@ -20,7 +20,7 @@ export default function PrivateRoute({ children }: PrivateRouteProps) {
   if (status === 'loading')
     return (
       <div className="flex items-center justify-center h-screen">
-        <Spinner />
+        <Spinner size="xl" />
       </div>
     );
   if (status === 'unauth') return <Navigate to="/login" replace />;
