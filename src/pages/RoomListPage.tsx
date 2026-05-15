@@ -36,9 +36,16 @@ export default function RoomListPage() {
         <Button onClick={() => setJoinModalOpen(true)}>강의 참여</Button>
       </div>
       <div className="p-6 grid grid-cols-3 gap-4">
-        {data?.map((room) => (
-          <RoomCard key={room.id} room={room} onClick={() => handleEnterRoom(room)} />
-        ))}
+        {data && data.length > 0 ? (
+          data?.map((room) => (
+            <RoomCard key={room.id} room={room} onClick={() => handleEnterRoom(room)} />
+          ))
+        ) : (
+          <div className="col-span-3 flex flex-col items-center justify-center py-20 text-text-secondary">
+            <p>참여 중인 강의가 없습니다.</p>
+            <p>강의를 생성하거나 초대 코드로 참여해보세요.</p>
+          </div>
+        )}
       </div>
       <CreateRoomModal isOpen={createModalOpen} onIsOpenChange={setCreateModalOpen} />
       <JoinRoomModal isOpen={joinModalOpen} onIsOpenChange={setJoinModalOpen} />
