@@ -23,21 +23,40 @@ export default function JoinRoomModal({ isOpen, onIsOpenChange }: JoinRoomModalP
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={onIsOpenChange}>
-      <Dialog.Popup>
-        <Dialog.Header>
-          <Dialog.Title>강의 참여</Dialog.Title>
-          <Dialog.Close />
+      <Dialog.Popup
+        className="bg-bg-sidebar border border-border rounded-[12px] w-[420px] p-3 flex flex-col gap-[18px] shadow-[0_24px_64px_rgba(0,0,0,0.6)]"
+        overlayElement={
+          <Dialog.OverlayPrimitive className="fixed inset-0 bg-black/65 backdrop-blur-[2px]" />
+        }
+      >
+        <Dialog.Header className="flex items-center justify-between">
+          <Dialog.Title className="text-base font-bold text-white">강의룸 참여</Dialog.Title>
+          <Dialog.Close className="bg-transparent border-none text-text-dim text-[18px] w-7 h-7 rounded flex items-center justify-center hover:bg-bg-hover hover:text-text-primary transition-colors cursor-pointer" />
         </Dialog.Header>
+
         <Dialog.Body>
           <TextInput
             placeholder="초대 코드를 입력하세요"
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value)}
+            className="w-full bg-bg-input border border-border rounded-md text-text-primary text-[13px] px-5 py-5 outline-none focus:border-accent-blue transition-colors"
           />
         </Dialog.Body>
-        <Dialog.Footer>
-          <Dialog.Close render={<Button>취소</Button>} />
-          <Button onClick={handleJoinRoom}>참여</Button>
+
+        <Dialog.Footer className="flex justify-end gap-2">
+          <Dialog.Close
+            render={
+              <button className="bg-transparent border border-border text-text-primary text-[13px] px-5 py-2 rounded-md hover:bg-bg-hover transition-colors cursor-pointer">
+                취소
+              </button>
+            }
+          />
+          <button
+            onClick={handleJoinRoom}
+            className="bg-accent-blue text-white text-[13px] font-semibold px-5 py-2 rounded-md hover:bg-[#1a8fe3] transition-colors cursor-pointer"
+          >
+            참여
+          </button>
         </Dialog.Footer>
       </Dialog.Popup>
     </Dialog.Root>
