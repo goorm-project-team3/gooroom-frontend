@@ -11,12 +11,22 @@ export const handlers = [
     return HttpResponse.json(
       {
         rooms: [
-          { id: 'room-1', name: 'GooRoom Intro', owner: 'Instructor' },
-          { id: 'room-2', name: 'TypeScript Practice', owner: 'Instructor' },
+          { id: 'room-1', name: 'GooRoom Intro', myRole: 'OWNER', memberCount: 5 },
+          { id: 'room-2', name: 'TypeScript Practice', myRole: 'USER', memberCount: 3 },
         ],
       },
       { status: 200 },
     );
+  }),
+  http.post('/rooms', async ({ request }) => {
+    const body = (await request.json()) as { name: string };
+    return HttpResponse.json(
+      { id: 'room-new', name: body.name, memberCount: 1, myRole: 'OWNER' },
+      { status: 201 },
+    );
+  }),
+  http.post('rooms/:id/join', async ({ params }) => {
+    return HttpResponse.json({ id: params.id, myRole: 'USER' }, { status: 200 });
   }),
   http.get('/rooms/:id/files', async ({ params }) => {
     return HttpResponse.json(
