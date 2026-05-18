@@ -21,6 +21,11 @@ export default function RoomListPage() {
     queryFn: () => api.get<{ rooms: Room[] }>('/rooms').then((res) => res.data.rooms),
   });
 
+  const { data: me } = useQuery({
+    queryKey: ['me'],
+    queryFn: () => api.get<{ id: string; name: string }>('/auth/me').then((res) => res.data),
+  });
+
   const handleEnterRoom = (room: Room) => {
     setRoom(room.id, room.myRole);
     navigate(`/rooms/${room.id}`);
@@ -35,7 +40,16 @@ export default function RoomListPage() {
         <span className="text-[22px] font-extrabold text-white tracking-tight">
           Goo<span className="text-accent-orange">Room</span>
         </span>
-        <div className="ml-auto flex items-center gap-2">{/* 추후 유저 칩 */}</div>
+        <div className="ml-auto flex items-center gap-2">
+          {me && (
+            <div className="flex items-center gap-2 bg-bg-card border border-border rounded-full px-3 py-1">
+              <div className="w-6 h-6 rounded-full bg-accent-blue flex items-center justify-center text-[11px] font-bold text-white">
+                {me.name[0]}
+              </div>
+              <span className="text-[13px] text-text-primary">{me.name}</span>
+            </div>
+          )}
+        </div>
       </header>
 
       {/* 바디 */}
