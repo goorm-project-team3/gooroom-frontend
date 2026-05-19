@@ -1,4 +1,4 @@
-import { Card, Badge, Button } from '@vapor-ui/core';
+import { Card, Badge } from '@vapor-ui/core';
 import type { Room } from '@/types/room';
 
 interface RoomCardProps {
