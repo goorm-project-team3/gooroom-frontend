@@ -1,31 +1,31 @@
- @import 'tailwindcss/theme';
- @import 'tailwindcss/utilities';
- @theme {
-     --color-bg-base: #1e1e1e;
-     --color-bg-panel: #252526;
-     --color-bg-sidebar: #2d2d2d;
-     --color-bg-activity: #333333;
-     --color-bg-topbar: #323233;
-     --color-bg-input: #3c3c3c;
-     --color-bg-hover: #2a2d2e;
-     --color-bg-selected: #094771;
-     --color-bg-card: #252526;
-     --color-text-primary: #d4d4d4;
-     --color-text-secondary: #9d9d9d;
-     --color-text-dim: #6d6d6d;
-     --color-border: #3e3e42;
-     --color-accent-blue: #007acc;
-     --color-accent-orange: #f59e0b;
-     --color-accent-green: #4ec94a;
-     --color-accent-red: #f87171;
- }
- 
+@import 'tailwindcss/theme';
+@import 'tailwindcss/utilities';
+@theme {
+    --color-bg-base: #1e1e1e;
+    --color-bg-panel: #252526;
+    --color-bg-sidebar: #2d2d2d;
+    --color-bg-activity: #333333;
+    --color-bg-topbar: #323233;
+    --color-bg-input: #3c3c3c;
+    --color-bg-hover: #2a2d2e;
+    --color-bg-selected: #094771;
+    --color-bg-card: #252526;
+    --color-text-primary: #d4d4d4;
+    --color-text-secondary: #9d9d9d;
+    --color-text-dim: #6d6d6d;
+    --color-border: #3e3e42;
+    --color-accent-blue: #007acc;
+    --color-accent-orange: #f59e0b;
+    --color-accent-green: #4ec94a;
+    --color-accent-red: #f87171;
+}
+
  :root {
-     background-color: #1e1e1e;
-     color: #d4d4d4;
- }
- 
- body {
-     margin: 0;
-     min-height: 100vh;
- }
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+}
