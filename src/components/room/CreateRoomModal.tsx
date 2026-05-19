@@ -2,7 +2,6 @@ import { api } from '@/api/instance';
 import { useRoomStore } from '@/stores/roomStore';
 import type { Room } from '@/types/room';
 import { Button, Dialog, TextInput } from '@vapor-ui/core';
-import { DialogPopup } from 'node_modules/@vapor-ui/core/dist/components/dialog/dialog';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -48,17 +47,17 @@ export default function CreateRoomModal({ isOpen, onIsOpenChange }: CreateRoomMo
         <Dialog.Footer className="flex justify-end gap-2">
           <Dialog.Close
             render={
-              <button className="bg-transparent border border-border text-text-primary text-[13px] px-5 py-2 rounded-md hover:bg-bg-hover transition-colors cursor-pointer">
+              <Button className="bg-transparent border border-border text-text-primary text-[13px] px-5 py-2 rounded-md hover:bg-bg-hover transition-colors cursor-pointer">
                 취소
-              </button>
+              </Button>
             }
           />
-          <button
+          <Button
             onClick={handleCreateRoom}
             className="bg-accent-blue text-white text-[13px] font-semibold px-5 py-2 rounded-md hover:bg-[#1a8fe3] transition-colors cursor-pointer"
           >
             만들기
-          </button>
+          </Button>
         </Dialog.Footer>
       </Dialog.Popup>
     </Dialog.Root>
