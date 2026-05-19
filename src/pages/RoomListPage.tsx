@@ -59,18 +59,22 @@ export default function RoomListPage() {
             <h2 className="text-base font-bold text-white">강의 목록</h2>
           </div>
           <div className="flex gap-2">
-            <button
+            <Button
               onClick={() => setCreateModalOpen(true)}
-              className="bg-accent-blue text-white text-[13px] font-semibold px-4 py-2 rounded-md hover:bg-[#1a8fe3] transition-colors"
+              colorPalette="primary"
+              variant="fill"
+              size="lg"
             >
               + 강의 생성
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={() => setJoinModalOpen(true)}
-              className="bg-transparent border border-border text-text-primary text-[13px] px-4 py-2 rounded-md hover:bg-bg-hover hover:border-text-secondary transition-colors"
+              colorPalette="secondary"
+              variant="outline"
+              size="lg"
             >
               참여하기
-            </button>
+            </Button>
           </div>
         </div>
 
