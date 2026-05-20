@@ -1,10 +1,17 @@
+import ActivityBar from '@/components/room/layout/ActivityBar';
 import RoomTopBar from '@/components/room/layout/RoomTopBar';
 import { useRoomStore } from '@/stores/roomStore';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { SidebarType, type Room } from '@/types/room';
 
 export default function RoomPage() {
+  const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
   const { roomId } = useParams();
+
+  const handleSidebarChange = (type: SidebarType) => {
+    setActiveSidebar((prev) => (prev === type ? null : type));
+  };
 
   useEffect(() => {
     useRoomStore.setState({
@@ -27,9 +34,7 @@ export default function RoomPage() {
       {/* 메인 영역 */}
       <div className="flex flex-1 overflow-hidden">
         {/* ActivityBar */}
-        <div className="w-[52px] bg-bg-activity shrink-0 flex items-center justify-center">
-          <span className="text-text-dim text-xs">Act</span>
-        </div>
+        <ActivityBar activeSidebar={activeSidebar} onSidebarChange={handleSidebarChange} />
 
         {/* Sidebar */}
         <div className="w-[240px] bg-bg-sidebar shrink-0 flex items-center justify-center">
