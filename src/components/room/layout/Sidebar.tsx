@@ -26,9 +26,11 @@ export default function Sidebar({ activeSidebar }: SidebarProps) {
       </div>
 
       {/* 콘텐츠 */}
-      {activeSidebar === 'explorer' && <FileTree />}
-      {activeSidebar === 'search' && <SearchPanel />}
-      {activeSidebar === 'members' && <MemberList />}
+      <div className="flex-1 overflow-y-auto">
+        {activeSidebar === 'explorer' && <FileTree />}
+        {activeSidebar === 'search' && <SearchPanel />}
+        {activeSidebar === 'members' && <MemberList />}
+      </div>
     </div>
   );
 }
