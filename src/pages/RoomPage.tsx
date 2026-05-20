@@ -3,7 +3,8 @@ import RoomTopBar from '@/components/room/layout/RoomTopBar';
 import { useRoomStore } from '@/stores/roomStore';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { SidebarType, type Room } from '@/types/room';
+import { SidebarType } from '@/types/room';
+import FileTree from '@/components/room/sidebar/FileTree';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -37,9 +38,20 @@ export default function RoomPage() {
         <ActivityBar activeSidebar={activeSidebar} onSidebarChange={handleSidebarChange} />
 
         {/* Sidebar */}
-        <div className="w-[240px] bg-bg-sidebar shrink-0 flex items-center justify-center">
+        {/* <div className="w-[240px] bg-bg-sidebar shrink-0 flex items-center justify-center">
           <span className="text-text-dim text-xs">Sidebar</span>
-        </div>
+        </div> */}
+        {activeSidebar !== null && (
+          <div className="w-[240px] bg-bg-sidebar shrink-0 flex flex-col overflow-y-auto">
+            {activeSidebar === 'explorer' && <FileTree />}
+            {activeSidebar === 'search' && (
+              <span className="text-text-dim text-xs p-4">Search</span>
+            )}
+            {activeSidebar === 'members' && (
+              <span className="text-text-dim text-xs p-4">Members</span>
+            )}
+          </div>
+        )}
 
         {/* 중앙 + 우측 영역 */}
         <div className="flex flex-1 flex-col overflow-hidden">
