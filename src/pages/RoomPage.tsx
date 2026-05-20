@@ -4,9 +4,7 @@ import { useRoomStore } from '@/stores/roomStore';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SidebarType } from '@/types/room';
-import FileTree from '@/components/room/sidebar/FileTree';
-import MemberList from '@/components/room/sidebar/MemberList';
-import SearchPanel from '@/components/room/sidebar/SearchPanel';
+import Sidebar from '@/components/room/layout/Sidebar';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -40,13 +38,7 @@ export default function RoomPage() {
         <ActivityBar activeSidebar={activeSidebar} onSidebarChange={handleSidebarChange} />
 
         {/* Sidebar */}
-        {activeSidebar !== null && (
-          <div className="w-[240px] bg-bg-sidebar shrink-0 flex flex-col overflow-y-auto">
-            {activeSidebar === 'explorer' && <FileTree />}
-            {activeSidebar === 'search' && <SearchPanel />}
-            {activeSidebar === 'members' && <MemberList />}
-          </div>
-        )}
+        <Sidebar activeSidebar={activeSidebar} />
 
         {/* 중앙 + 우측 영역 */}
         <div className="flex flex-1 flex-col overflow-hidden">
