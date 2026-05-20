@@ -5,8 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { SidebarType } from '@/types/room';
 import Sidebar from '@/components/room/layout/Sidebar';
-import EditorTabs from '@/components/room/editor/EditorTabs';
-import MonacoEditor from '@/components/room/editor/MonacoEditor';
+import EditorArea from '@/components/room/layout/EditorArea';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -47,10 +46,7 @@ export default function RoomPage() {
           {/* EditorArea + RightPanel */}
           <div className="flex flex-1 overflow-hidden">
             {/* EditorArea */}
-            <div className="flex-1 bg-bg-base flex flex-col overflow-hidden">
-              <EditorTabs />
-              <MonacoEditor />
-            </div>
+            <EditorArea />
 
             {/* RightPanel*/}
             <div className="w-[280px] bg-bg-panel shrink-0 flex items-center justify-center">
