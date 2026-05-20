@@ -1,0 +1,70 @@
+import { useFocusStore } from '@/stores/focusStore';
+import { useRoomStore } from '@/stores/roomStore';
+import { Avatar, Button, Text } from '@vapor-ui/core';
+
+interface RoomTopBarProps {
+  roomName: string;
+}
+
+const PROFILE_COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#eab308', '#ec4899', '#6366f1'];
+
+function getProfileColor(id: string) {
+  const index = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return PROFILE_COLORS[index % PROFILE_COLORS.length];
+}
+
+export default function RoomTopBar({ roomName }: RoomTopBarProps) {
+  const { role, members } = useRoomStore();
+  const { isFocusMode, toggleFocusMode } = useFocusStore();
+  const visibleMembers = members.slice(0, 4);
+  const overflowCount = members.length - visibleMembers.length;
+
+  return (
+    <header className="h-[44px] flex items-center justify-between px-4 bg-bg-topbar border-b border-border shrink-0">
+      {/* 좌측 : 강의룸 이름 */}
+      <Text typography="body3" className="text-text-secondary">
+        {roomName}
+      </Text>
+
+      {/* 우측 */}
+      <div className="flex items-center gap-3">
+        <div className="flex -space-x-2">
+          {visibleMembers.map((member) => (
+            <Avatar.Root
+              key={member.id}
+              alt={member.name}
+              title={member.name}
+              shape="circle"
+              size="sm"
+              style={{
+                backgroundColor: getProfileColor(member.id),
+                outline: '1px solid var(--color-bg-topbar)',
+              }}
+            >
+              <Avatar.FallbackPrimitive />
+            </Avatar.Root>
+          ))}
+          {overflowCount > 0 && (
+            <Avatar.Root
+              size="sm"
+              shape="circle"
+              alt={`${overflowCount}`}
+              title={`+${overflowCount} 명`}
+            ></Avatar.Root>
+          )}
+        </div>
+
+        {role === 'USER' ? (
+          <Button
+            size="sm"
+            variant={isFocusMode ? 'fill' : 'outline'}
+            onClick={toggleFocusMode}
+            colorPalette={isFocusMode ? 'primary' : 'secondary'}
+          >
+            {isFocusMode ? 'FOCUS ON' : 'FOCUS OFF'}
+          </Button>
+        ) : null}
+      </div>
+    </header>
+  );
+}
