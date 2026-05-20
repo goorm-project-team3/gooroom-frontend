@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 import { SidebarType } from '@/types/room';
 import Sidebar from '@/components/room/layout/Sidebar';
 import EditorArea from '@/components/room/layout/EditorArea';
+import RightPanel from '@/components/room/layout/RightPanel';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -49,9 +50,7 @@ export default function RoomPage() {
             <EditorArea />
 
             {/* RightPanel*/}
-            <div className="w-[280px] bg-bg-panel shrink-0 flex items-center justify-center">
-              <span className="text-text-dim text-xs">Chat</span>
-            </div>
+            <RightPanel />
           </div>
 
           {/* BottomPanel */}

@@ -29,3 +29,14 @@ body {
     margin: 0;
     min-height: 100vh;
 }
+
+@keyframes float-up {
+    0% {
+        transform: translateX(-50%) translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(-50%) translateY(-120px) scale(1.8);
+        opacity: 0;
+    }
+}

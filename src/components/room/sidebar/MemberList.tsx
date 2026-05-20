@@ -35,7 +35,11 @@ export default function MemberList() {
             <div className="flex items-center gap-2">
               <span className="text-[13px] text-text-primary truncate">{member.name}</span>
               {member.role === 'OWNER' && (
-                <Badge size="sm" shape="pill" colorPalette="primary">
+                <Badge
+                  size="sm"
+                  shape="pill"
+                  style={{ backgroundColor: '#f59e0b', color: 'white', fontWeight: '500' }}
+                >
                   강사
                 </Badge>
               )}
