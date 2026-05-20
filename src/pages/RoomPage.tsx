@@ -6,6 +6,7 @@ import { useParams } from 'react-router-dom';
 import { SidebarType } from '@/types/room';
 import FileTree from '@/components/room/sidebar/FileTree';
 import MemberList from '@/components/room/sidebar/MemberList';
+import SearchPanel from '@/components/room/sidebar/SearchPanel';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -42,9 +43,7 @@ export default function RoomPage() {
         {activeSidebar !== null && (
           <div className="w-[240px] bg-bg-sidebar shrink-0 flex flex-col overflow-y-auto">
             {activeSidebar === 'explorer' && <FileTree />}
-            {activeSidebar === 'search' && (
-              <span className="text-text-dim text-xs p-4">Search</span>
-            )}
+            {activeSidebar === 'search' && <SearchPanel />}
             {activeSidebar === 'members' && <MemberList />}
           </div>
         )}
