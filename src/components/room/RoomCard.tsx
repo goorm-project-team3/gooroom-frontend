@@ -7,7 +7,7 @@ interface RoomCardProps {
 }
 
 export default function RoomCard({ room, onClick }: RoomCardProps) {
-  const isOwner = room.myRole === 'OWNER';
+  const isOwner = room.userRole === 'OWNER';
 
   return (
     <Card.Root
@@ -20,23 +20,39 @@ export default function RoomCard({ room, onClick }: RoomCardProps) {
       />
 
       {/* 헤더 */}
-      <Card.Header className="flex items-start justify-between gap-2 mt-1 pb-10 p-0 border-b-0">
+      <Card.Header className="flex items-start justify-between gap-2 mt-1 p-0 border-b-0">
         <span className="text-[15px] font-bold text-white leading-snug">{room.name}</span>
-        <Badge
-          colorPalette={isOwner ? 'warning' : 'primary'}
-          shape="pill"
-          size="sm"
-          className="shrink-0 text-[10px] font-bold"
-        >
-          {isOwner ? 'OWNER' : 'USER'}
-        </Badge>
+        <div className="flex items-center gap-1 shrink-0">
+          <Badge
+            shape="pill"
+            size="sm"
+            className={`shrink-0 text-[10px] font-bold ${isOwner ? 'bg-accent-orange text-white' : 'bg-accent-blue text-white'}`}
+          >
+            {isOwner ? 'OWNER' : 'USER'}
+          </Badge>
+          <Badge
+            shape="pill"
+            size="sm"
+            className={`text-[10px] font-bold ${room.visibility === 'PRIVATE' ? 'bg-bg-hover text-text-primary' : 'bg-accent-green text-white'}`}
+          >
+            {room.visibility === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC'}
+          </Badge>
+        </div>
       </Card.Header>
+
+      <Card.Body className="flex flex-1">
+        {room.description && (
+          <p className="text-[12px] text-text-dim leading-relaxed line-clamp-2">
+            {room.description}
+          </p>
+        )}
+      </Card.Body>
 
       {/* 푸터 */}
       <Card.Footer className="flex items-center justify-between mt-auto p-0 border-t-0">
         <div className="flex items-center gap-1 text-[12px] text-text-dim">
           <span>참여 인원 : </span>
-          <span>{room.memberCount}명</span>
+          <span>{room.participantCount}명</span>
         </div>
       </Card.Footer>
     </Card.Root>

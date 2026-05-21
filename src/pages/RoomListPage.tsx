@@ -18,7 +18,7 @@ export default function RoomListPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['rooms'],
-    queryFn: () => api.get<{ rooms: Room[] }>('/rooms').then((res) => res.data.rooms),
+    queryFn: () => api.get<Room[]>('/api/rooms').then((res) => res.data),
   });
 
   const { data: me } = useQuery({
@@ -27,7 +27,7 @@ export default function RoomListPage() {
   });
 
   const handleEnterRoom = (room: Room) => {
-    setRoom(room.id, room.myRole);
+    setRoom(String(room.id), room.userRole, room.name);
     navigate(`/rooms/${room.id}`);
   };
 
@@ -37,7 +37,10 @@ export default function RoomListPage() {
     <div className="flex flex-col h-screen bg-bg-base overflow-hidden">
       {/* 상단 탑바 */}
       <header className="h-[52px] bg-bg-topbar border-b border-border flex items-center px-6 gap-4 shrink-0">
-        <span className="text-[22px] font-extrabold text-white tracking-tight">
+        <span
+          className="text-[22px] font-extrabold text-white tracking-tight cursor-pointer"
+          onClick={() => navigate('/')}
+        >
           Goo<span className="text-accent-orange">Room</span>
         </span>
         <div className="ml-auto flex items-center gap-2">

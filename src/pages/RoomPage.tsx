@@ -2,7 +2,6 @@ import ActivityBar from '@/components/room/layout/ActivityBar';
 import RoomTopBar from '@/components/room/layout/RoomTopBar';
 import { useRoomStore } from '@/stores/roomStore';
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { SidebarType } from '@/types/room';
 import Sidebar from '@/components/room/layout/Sidebar';
 import EditorArea from '@/components/room/layout/EditorArea';
@@ -12,7 +11,6 @@ import StatusBar from '@/components/room/layout/StatusBar';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
-  const { roomId } = useParams();
 
   const handleSidebarChange = (type: SidebarType) => {
     setActiveSidebar((prev) => (prev === type ? null : type));
@@ -35,7 +33,7 @@ export default function RoomPage() {
   return (
     <div className="h-screen flex flex-col bg-bg-base overflow-hidden">
       {/* TopBar */}
-      <RoomTopBar roomName={`강의룸 ${roomId}`} />
+      <RoomTopBar />
 
       {/* 메인 영역 */}
       <div className="flex flex-1 overflow-hidden">
