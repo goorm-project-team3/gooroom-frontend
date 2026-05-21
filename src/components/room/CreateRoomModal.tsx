@@ -16,8 +16,8 @@ export default function CreateRoomModal({ isOpen, onIsOpenChange }: CreateRoomMo
   const navigate = useNavigate();
 
   const handleCreateRoom = async () => {
-    const res = await api.post<Room>('/rooms', { name: roomName });
-    setRoom(res.data.id, res.data.myRole);
+    const res = await api.post<Room>('/api/rooms', { name: roomName, visibility: 'PUBLIC' });
+    setRoom(String(res.data.id), res.data.userRole);
     onIsOpenChange(false);
     navigate(`/rooms/${res.data.id}`);
   };

@@ -10,33 +10,43 @@ export const handlers = [
   http.get('/auth/me', async () => {
     return HttpResponse.json({ id: 'user-1', name: 'Test User' }, { status: 200 });
   }),
-  http.get('/rooms', async () => {
-    return HttpResponse.json(
-      {
-        rooms: [
-          { id: 'room-1', name: 'GooRoom Intro', myRole: 'OWNER', memberCount: 5 },
-          { id: 'room-2', name: 'TypeScript Practice', myRole: 'USER', memberCount: 3 },
-        ],
-      },
-      { status: 200 },
-    );
-  }),
-  http.post('/rooms', async ({ request }) => {
+  http.post('/api/rooms', async ({ request }) => {
     const body = (await request.json()) as { name: string };
     return HttpResponse.json(
-      { id: 'room-new', name: body.name, memberCount: 1, myRole: 'OWNER' },
+      {
+        id: 999,
+        name: body.name,
+        description: '',
+        visibility: 'PUBLIC',
+        userRole: 'OWNER',
+        participantCount: 1,
+        createdAt: '2026-05-21T00:00:00',
+      },
       { status: 201 },
     );
   }),
-  http.post('rooms/:id/join', async ({ params }) => {
-    return HttpResponse.json({ id: params.id, myRole: 'USER' }, { status: 200 });
-  }),
-  http.get('/rooms/:id/files', async ({ params }) => {
+  http.get('/api/rooms', async () => {
     return HttpResponse.json(
-      {
-        roomId: params.id,
-        files: [{ id: 'file-1', name: 'main.tsx' }],
-      },
+      [
+        {
+          id: 1,
+          name: 'GooRoom Intro',
+          description: '',
+          visibility: 'PUBLIC',
+          userRole: 'OWNER',
+          participantCount: 5,
+          createdAt: '2026-05-21T00:00:00',
+        },
+        {
+          id: 2,
+          name: 'TypeScript Practice',
+          description: '',
+          visibility: 'PUBLIC',
+          userRole: 'USER',
+          participantCount: 3,
+          createdAt: '2026-05-21T00:00:00',
+        },
+      ],
       { status: 200 },
     );
   }),

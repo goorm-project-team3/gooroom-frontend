@@ -18,7 +18,7 @@ export default function RoomListPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['rooms'],
-    queryFn: () => api.get<{ rooms: Room[] }>('/rooms').then((res) => res.data.rooms),
+    queryFn: () => api.get<Room[]>('/api/rooms').then((res) => res.data),
   });
 
   const { data: me } = useQuery({
@@ -27,7 +27,7 @@ export default function RoomListPage() {
   });
 
   const handleEnterRoom = (room: Room) => {
-    setRoom(room.id, room.myRole);
+    setRoom(String(room.id), room.userRole);
     navigate(`/rooms/${room.id}`);
   };
 

@@ -7,10 +7,13 @@ export interface RoomMember {
 }
 
 export interface Room {
-  id: string;
+  id: number;
   name: string;
-  memberCount: number;
-  myRole: RoomRole;
+  description: string;
+  visibility: string;
+  userRole: RoomRole;
+  participantCount: number;
+  createdAt: string;
 }
 
 export type SidebarType = 'explorer' | 'search' | 'members';

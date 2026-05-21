@@ -7,7 +7,7 @@ interface RoomCardProps {
 }
 
 export default function RoomCard({ room, onClick }: RoomCardProps) {
-  const isOwner = room.myRole === 'OWNER';
+  const isOwner = room.userRole === 'OWNER';
 
   return (
     <Card.Root
@@ -36,7 +36,7 @@ export default function RoomCard({ room, onClick }: RoomCardProps) {
       <Card.Footer className="flex items-center justify-between mt-auto p-0 border-t-0">
         <div className="flex items-center gap-1 text-[12px] text-text-dim">
           <span>참여 인원 : </span>
-          <span>{room.memberCount}명</span>
+          <span>{room.participantCount}명</span>
         </div>
       </Card.Footer>
     </Card.Root>
