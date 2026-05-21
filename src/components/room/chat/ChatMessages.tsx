@@ -26,7 +26,7 @@ export default function ChatMessages() {
           >
             <div className="flex items-baseline gap-2">
               <span
-                className={`text-[12px] font-medium ${isOwner ? 'text-[#007acc]' : 'text-text-primary'}`}
+                className={`text-[12px] font-medium ${isOwner ? 'text-accent-orange' : 'text-text-primary'}`}
               >
                 {msg.senderName}
               </span>

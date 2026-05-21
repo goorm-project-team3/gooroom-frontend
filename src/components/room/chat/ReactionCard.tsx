@@ -16,15 +16,15 @@ export default function ReactionCard() {
     submitReaction,
   } = useRoomStore();
 
-  const [remaining, setRemainig] = useState(0);
+  const [remaining, setRemaining] = useState(0);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (role == 'OWNER') return;
+    if (role === 'OWNER') return;
 
     if (isReactionOpen) {
       setVisible(true);
-      setRemainig(0);
+      setRemaining(0);
       return;
     }
 
@@ -36,7 +36,7 @@ export default function ReactionCard() {
     const tick = () => {
       const elapsed = Date.now() - reactionClosedAt;
       const left = Math.max(0, DISMISS_DELAY - elapsed);
-      setRemainig(left);
+      setRemaining(left);
       if (left === 0) setVisible(false);
     };
     tick();
