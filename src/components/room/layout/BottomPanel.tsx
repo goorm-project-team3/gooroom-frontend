@@ -1,6 +1,6 @@
 import { useRoomStore } from '@/stores/roomStore';
 import { useRef, useState } from 'react';
-import { VscAdd, VscCheck, VscEdit, VscNote, VscTrash } from 'react-icons/vsc';
+import { VscAdd, VscCheck, VscEdit, VscTrash } from 'react-icons/vsc';
 import ReactMarkdown from 'react-markdown';
 
 interface Note {
@@ -11,7 +11,7 @@ interface Note {
 }
 
 type TabType = 'owner' | 'user';
-type ViewMode = 'edit' | 'view';
+type ViewMode = 'edit' | 'preview';
 
 const MIN_HEIGHT = 120;
 const MAX_HEIGHT = 620;
@@ -51,7 +51,7 @@ function NoteItem({ note, isActive, canEdit, onSelect, onTitleChange, onDelete }
 
   return (
     <div
-      className={`flex itmes-center gap-1 px-2 py-[5px] rounded cursor-pointer group transition-colors ${
+      className={`flex items-center gap-1 px-2 py-[5px] rounded cursor-pointer group transition-colors ${
         isActive
           ? 'bg-bg-selected text-text-primary'
           : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
@@ -120,7 +120,7 @@ export default function BottomPanel() {
 
   const notes = activeTab === 'owner' ? ownerNotes : userNotes.filter((n) => n.ownerId === me?.id);
 
-  const activeNote = notes.find((n) => n.id == activeNoteId) ?? null;
+  const activeNote = notes.find((n) => n.id === activeNoteId) ?? null;
 
   const canEditContent = activeTab === 'user' || role === 'OWNER';
   const canEditTitle = canEditContent;
@@ -129,7 +129,7 @@ export default function BottomPanel() {
     setActiveTab(tab);
     const tabNotes = tab === 'owner' ? ownerNotes : userNotes.filter((n) => n.ownerId === me?.id);
     setActiveNoteId(tabNotes[0]?.id ?? null);
-    setViewMode(tab === 'owner' && role === 'USER' ? 'view' : 'edit');
+    setViewMode(tab === 'owner' && role === 'USER' ? 'preview' : 'edit');
   }
 
   function handleAddNote() {
