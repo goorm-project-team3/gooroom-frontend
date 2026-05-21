@@ -12,12 +12,14 @@ interface CreateRoomModalProps {
 
 export default function CreateRoomModal({ isOpen, onIsOpenChange }: CreateRoomModalProps) {
   const [roomName, setRoomName] = useState('');
+  const [description, setDescription] = useState('');
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
   const { setRoom } = useRoomStore();
   const navigate = useNavigate();
 
   const handleCreateRoom = async () => {
-    const res = await api.post<Room>('/api/rooms', { name: roomName, visibility: 'PUBLIC' });
-    setRoom(String(res.data.id), res.data.userRole);
+    const res = await api.post<Room>('/api/rooms', { name: roomName, description, visibility });
+    setRoom(String(res.data.id), res.data.name, res.data.userRole);
     onIsOpenChange(false);
     navigate(`/rooms/${res.data.id}`);
   };
@@ -35,13 +37,38 @@ export default function CreateRoomModal({ isOpen, onIsOpenChange }: CreateRoomMo
           <Dialog.Close className="bg-transparent border-none text-text-dim text-[18px] w-7 h-7 rounded flex items-center justify-center hover:bg-bg-hover hover:text-text-primary transition-colors cursor-pointer" />
         </Dialog.Header>
 
-        <Dialog.Body>
+        <Dialog.Body className="flex flex-col gap-3">
           <TextInput
             placeholder="강의룸 이름을 입력하세요"
             value={roomName}
             onChange={(e) => setRoomName(e.target.value)}
             className="w-full bg-bg-input border border-border rounded-md text-text-primary text-[13px] px-5 py-5 outline-none focus:border-accent-blue transition-colors"
           />
+          <TextInput
+            placeholder="강의룸 설명을 입력하세요"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full bg-bg-input border border-border rounded-md text-text-primary text-[13px] px-5 py-5 outline-none focus:border-accent-blue transition-colors"
+          />
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-text-dim">공개 여부</span>
+            <div className="flex rounded-md overflow-hidden border border-border">
+              <button
+                type="button"
+                className={`text-[12px] px-3 py-1 transition-colors ${visibility === 'PUBLIC' ? 'bg-accent-blue text-white' : 'bg-bg-input text-text-dim hover:bg-bg-hover'}`}
+                onClick={() => setVisibility('PUBLIC')}
+              >
+                PUBLIC
+              </button>
+              <button
+                type="button"
+                className={`text-[12px] px-3 py-1 transition-colors ${visibility === 'PRIVATE' ? 'bg-accent-blue text-white' : 'bg-bg-input text-text-dim hover:bg-bg-hover'}`}
+                onClick={() => setVisibility('PRIVATE')}
+              >
+                PRIVATE
+              </button>
+            </div>
+          </div>
         </Dialog.Body>
 
         <Dialog.Footer className="flex justify-end gap-2">
