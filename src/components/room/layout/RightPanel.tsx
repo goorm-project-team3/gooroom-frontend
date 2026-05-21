@@ -1,6 +1,7 @@
 import ChatInput from '../chat/ChatInput';
 import ChatMessages from '../chat/ChatMessages';
 import ReactionBar from '../chat/ReactionBar';
+import ReactionCard from '../chat/ReactionCard';
 
 export default function RightPanel() {
   return (
@@ -11,6 +12,9 @@ export default function RightPanel() {
           CHAT
         </span>
       </div>
+
+      {/* 이해도 반응 */}
+      <ReactionCard />
 
       {/* 채팅 */}
       <ChatMessages />

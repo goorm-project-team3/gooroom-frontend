@@ -31,6 +31,9 @@ body {
     min-height: 100vh;
 }
 
+
+/* 이모지 */
+
 @keyframes float-up {
     0% {
         transform: translateX(-50%) translateY(0) scale(1);
