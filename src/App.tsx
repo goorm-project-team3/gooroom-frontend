@@ -20,7 +20,7 @@ export default function App() {
           }
         />
         <Route
-          path="/room/:roomId"
+          path="/rooms/:roomId"
           element={
             <PrivateRoute>
               <RoomPage />

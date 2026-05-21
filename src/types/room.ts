@@ -12,3 +12,5 @@ export interface Room {
   memberCount: number;
   myRole: RoomRole;
 }
+
+export type SidebarType = 'explorer' | 'search' | 'members';

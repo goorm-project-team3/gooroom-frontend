@@ -1,29 +1,37 @@
 name: FE CI
+
 on:
   pull_request:
-    branches: [main, develop]
+  push:
+    branches:
+      - main
+      - develop
+
 jobs:
-  ci:
+  quality:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: 20.19.0
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
-      - name: Verify rolldown binding installed
-        run: |
-          node -p "process.platform + ' ' + process.arch"
-          npm ls rolldown || true
-          ls -la node_modules/@rolldown || true
+      - name: Run ESLint
+        run: npm run lint
 
-      - run: npm run format:check
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm run build
+      - name: Run Prettier check
+        run: npm run format:check
+
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
