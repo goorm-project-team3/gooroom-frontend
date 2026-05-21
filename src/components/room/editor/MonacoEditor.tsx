@@ -1,5 +1,6 @@
 import { useEditorStore } from '@/stores/editorStore';
 import { Editor } from '@monaco-editor/react';
+import { VscVscode } from 'react-icons/vsc';
 
 const MOCK_CONTENTS: Record<string, string> = {
   'file-1': `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from
@@ -39,6 +40,14 @@ const getLanguage = (fileId: string): string => {
 
 export default function MonacoEditor() {
   const { activeFileId } = useEditorStore();
+
+  if (!activeFileId) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-bg-base text-text-dim select-none">
+        <VscVscode size={512} className="opacity-20" />
+      </div>
+    );
+  }
 
   const content = activeFileId ? (MOCK_CONTENTS[activeFileId] ?? '') : '';
   const language = activeFileId ? getLanguage(activeFileId) : 'plaintext';

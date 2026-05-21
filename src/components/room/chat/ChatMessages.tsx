@@ -30,7 +30,9 @@ export default function ChatMessages() {
               >
                 {msg.senderName}
               </span>
-              {isOwner && <span className="text-[10px] text-[#007acc] font-semibold">강사</span>}
+              {isOwner && (
+                <span className="text-[10px] text-accent-orange font-semibold">강사</span>
+              )}
               <span className="text-[11px] text-text-dim">{msg.timestamp}</span>
             </div>
             <p className="text-[13px] text-text-secondary leading-relaxed break-words">
