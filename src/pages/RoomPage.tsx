@@ -7,6 +7,7 @@ import { SidebarType } from '@/types/room';
 import Sidebar from '@/components/room/layout/Sidebar';
 import EditorArea from '@/components/room/layout/EditorArea';
 import RightPanel from '@/components/room/layout/RightPanel';
+import BottomPanel from '@/components/room/layout/BottomPanel';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -18,6 +19,7 @@ export default function RoomPage() {
 
   useEffect(() => {
     useRoomStore.setState({
+      role: 'USER',
       members: [
         { id: 'user-1', name: '김강사', role: 'OWNER' },
         { id: 'user-2', name: '박학생', role: 'USER' },
@@ -54,9 +56,7 @@ export default function RoomPage() {
           </div>
 
           {/* BottomPanel */}
-          <div className="h-[200px] bg-bg-panel shrink-0 flex items-center justify-center border-t border-border">
-            <span className="text-text-dim text-xs">Bottom</span>
-          </div>
+          <BottomPanel />
 
           {/* StatusBar */}
           <div className="h-[28px] bg-bg-activity shrink-0 flex items-center px-3 border-t border-border">

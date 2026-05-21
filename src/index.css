@@ -1,5 +1,6 @@
 @import 'tailwindcss/theme';
 @import 'tailwindcss/utilities';
+@plugin "@tailwindcss/typography";
 @theme {
     --color-bg-base: #1e1e1e;
     --color-bg-panel: #252526;
