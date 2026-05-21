@@ -27,7 +27,7 @@ export default function RoomListPage() {
   });
 
   const handleEnterRoom = (room: Room) => {
-    setRoom(String(room.id), room.name, room.userRole);
+    setRoom(String(room.id), room.userRole, room.name);
     navigate(`/rooms/${room.id}`);
   };
 

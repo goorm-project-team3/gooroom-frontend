@@ -15,8 +15,10 @@ export default function JoinRoomModal({ isOpen, onIsOpenChange }: JoinRoomModalP
   const navigate = useNavigate();
 
   const handleJoinRoom = async () => {
-    const res = await api.post<{ id: string; myRole: 'USER' }>(`/rooms/${inviteCode}/join`);
-    setRoom(res.data.id, res.data.myRole);
+    const res = await api.post<{ id: string; userRole: 'USER'; name: string }>(
+      `/rooms/${inviteCode}/join`,
+    );
+    setRoom(res.data.id, res.data.userRole);
     onIsOpenChange(false);
     navigate(`/rooms/${res.data.id}`);
   };

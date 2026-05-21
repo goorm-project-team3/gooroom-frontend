@@ -12,7 +12,7 @@ interface RoomStore {
   roomName: string | null;
   role: RoomRole;
   members: RoomMember[];
-  setRoom: (roomId: string, roomName: string, role: RoomRole) => void;
+  setRoom: (roomId: string, role: RoomRole, roomName?: string) => void;
   clearRoom: () => void;
 
   isReactionOpen: boolean;
@@ -30,7 +30,7 @@ export const useRoomStore = create<RoomStore>((set) => ({
   roomName: null,
   role: 'USER',
   members: [],
-  setRoom: (roomId, roomName, role) => set({ roomId, roomName, role }),
+  setRoom: (roomId, role, roomName) => set({ roomId, role, roomName: roomName ?? null }),
   clearRoom: () => set({ roomId: null, role: 'USER', members: [] }),
   isReactionOpen: false,
   reactionCounts: { understand: 0, confused: 0 },
