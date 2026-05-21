@@ -32,12 +32,12 @@ export default function SearchPanel() {
   return (
     <div className="flex flex-col gap-2 p-2">
       {/* 검색어 입력 */}
-      <TextInput
+      <input
         type="search"
         placeholder="Search"
         value={query}
-        onValueChange={(val) => setQuery(val)}
-        className="w-full bg-bg-input"
+        onChange={(e) => setQuery(e.target.value)}
+        className="w-full bg-bg-input text-text-primary px-2 py-1 h-[24px]"
       />
 
       {/* 검색 결과 */}
