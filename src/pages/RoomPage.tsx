@@ -8,6 +8,7 @@ import Sidebar from '@/components/room/layout/Sidebar';
 import EditorArea from '@/components/room/layout/EditorArea';
 import RightPanel from '@/components/room/layout/RightPanel';
 import BottomPanel from '@/components/room/layout/BottomPanel';
+import StatusBar from '@/components/room/layout/StatusBar';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -59,9 +60,7 @@ export default function RoomPage() {
           <BottomPanel />
 
           {/* StatusBar */}
-          <div className="h-[28px] bg-bg-activity shrink-0 flex items-center px-3 border-t border-border">
-            <span className="text-text-dim text-xs">StatusBar</span>
-          </div>
+          <StatusBar />
         </div>
       </div>
     </div>
