@@ -9,9 +9,10 @@ interface ReactionCounts {
 
 interface RoomStore {
   roomId: string | null;
+  roomName: string | null;
   role: RoomRole;
   members: RoomMember[];
-  setRoom: (roomId: string, role: RoomRole) => void;
+  setRoom: (roomId: string, roomName: string, role: RoomRole) => void;
   clearRoom: () => void;
 
   isReactionOpen: boolean;
@@ -26,9 +27,10 @@ interface RoomStore {
 
 export const useRoomStore = create<RoomStore>((set) => ({
   roomId: null,
+  roomName: null,
   role: 'USER',
   members: [],
-  setRoom: (roomId, role) => set({ roomId, role }),
+  setRoom: (roomId, roomName, role) => set({ roomId, roomName, role }),
   clearRoom: () => set({ roomId: null, role: 'USER', members: [] }),
   isReactionOpen: false,
   reactionCounts: { understand: 0, confused: 0 },

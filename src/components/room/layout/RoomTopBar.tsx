@@ -1,10 +1,7 @@
 import { useFocusStore } from '@/stores/focusStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Avatar, Button, Text } from '@vapor-ui/core';
-
-interface RoomTopBarProps {
-  roomName: string;
-}
+import { useNavigate } from 'react-router-dom';
 
 const PROFILE_COLORS = ['#3b82f6', '#22c55e', '#a855f7', '#eab308', '#ec4899', '#6366f1'];
 
@@ -13,18 +10,33 @@ function getProfileColor(id: string) {
   return PROFILE_COLORS[index % PROFILE_COLORS.length];
 }
 
-export default function RoomTopBar({ roomName }: RoomTopBarProps) {
-  const { role, members } = useRoomStore();
+export default function RoomTopBar() {
+  const { role, members, roomName } = useRoomStore();
   const { isFocusMode, toggleFocusMode } = useFocusStore();
+
+  const navigate = useNavigate();
   const visibleMembers = members.slice(0, 4);
   const overflowCount = members.length - visibleMembers.length;
 
   return (
     <header className="h-[44px] flex items-center justify-between px-4 bg-bg-topbar border-b border-border shrink-0">
-      {/* 좌측 : 강의룸 이름 */}
-      <Text typography="body3" className="text-text-secondary">
-        {roomName}
-      </Text>
+      {/* 좌측 : 홈 버튼 + 강의룸 이름 */}
+      <div className="flex items-center gap-3">
+        <span
+          className="text-[18px] font-extrabold text-white tracking-tight cursor-pointer"
+          onClick={() => navigate('/')}
+        >
+          Goo<span className="text-accent-orange">Room</span>
+        </span>
+        {roomName && (
+          <>
+            <span className="text-text-dim text-[14px]">/</span>
+            <Text typography="body3" className="text-text-secondary">
+              {roomName}
+            </Text>
+          </>
+        )}
+      </div>
 
       {/* 우측 */}
       <div className="flex items-center gap-3">

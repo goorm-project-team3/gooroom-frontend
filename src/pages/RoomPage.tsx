@@ -35,7 +35,7 @@ export default function RoomPage() {
   return (
     <div className="h-screen flex flex-col bg-bg-base overflow-hidden">
       {/* TopBar */}
-      <RoomTopBar roomName={`강의룸 ${roomId}`} />
+      <RoomTopBar />
 
       {/* 메인 영역 */}
       <div className="flex flex-1 overflow-hidden">

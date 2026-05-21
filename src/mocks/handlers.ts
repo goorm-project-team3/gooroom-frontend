@@ -11,13 +11,17 @@ export const handlers = [
     return HttpResponse.json({ id: 'user-1', name: 'Test User' }, { status: 200 });
   }),
   http.post('/api/rooms', async ({ request }) => {
-    const body = (await request.json()) as { name: string };
+    const body = (await request.json()) as {
+      name: string;
+      description: string;
+      visibility: string;
+    };
     return HttpResponse.json(
       {
         id: 999,
         name: body.name,
-        description: '',
-        visibility: 'PUBLIC',
+        description: body.description,
+        visibility: body.visibility,
         userRole: 'OWNER',
         participantCount: 1,
         createdAt: '2026-05-21T00:00:00',
@@ -31,7 +35,7 @@ export const handlers = [
         {
           id: 1,
           name: 'GooRoom Intro',
-          description: '',
+          description: 'GooRoom 사용법을 소개하는 강의입니다.',
           visibility: 'PUBLIC',
           userRole: 'OWNER',
           participantCount: 5,
@@ -40,8 +44,8 @@ export const handlers = [
         {
           id: 2,
           name: 'TypeScript Practice',
-          description: '',
-          visibility: 'PUBLIC',
+          description: 'TypeScript 기본 문법을 연습하는 강의입니다.',
+          visibility: 'PRIVATE',
           userRole: 'USER',
           participantCount: 3,
           createdAt: '2026-05-21T00:00:00',
