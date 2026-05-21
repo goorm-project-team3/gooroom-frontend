@@ -1,7 +1,7 @@
 import { useRoomStore } from '@/stores/roomStore';
 import { useEffect, useState } from 'react';
 
-const DISMISS_DELAY = 3000; // 반응 카드 사라지는 시간 (3초)
+const DISMISS_DELAY = 3000;
 
 export default function ReactionCard() {
   const {
@@ -16,37 +16,22 @@ export default function ReactionCard() {
     submitReaction,
   } = useRoomStore();
 
-  const [remaining, setRemaining] = useState(0);
-  const [visible, setVisible] = useState(false);
+  const [remaining, setRemaining] = useState(DISMISS_DELAY);
 
   useEffect(() => {
-    if (role === 'OWNER') return;
+    if (role === 'OWNER' || isReactionOpen || !reactionClosedAt) return;
 
-    if (isReactionOpen) {
-      setVisible(true);
-      setRemaining(0);
-      return;
-    }
-
-    if (!reactionClosedAt) {
-      setVisible(false);
-      return;
-    }
-
-    const tick = () => {
-      const elapsed = Date.now() - reactionClosedAt;
-      const left = Math.max(0, DISMISS_DELAY - elapsed);
+    const timer = setInterval(() => {
+      const left = Math.max(0, DISMISS_DELAY - (Date.now() - reactionClosedAt));
       setRemaining(left);
-      if (left === 0) setVisible(false);
-    };
-    tick();
-    const timer = setInterval(tick, 100);
+    }, 100);
     return () => clearInterval(timer);
   }, [isReactionOpen, reactionClosedAt, role]);
 
-  if (role !== 'OWNER' && !visible) return null;
-
+  const visible = role === 'OWNER' || isReactionOpen || (!!reactionClosedAt && remaining > 0);
   const countdownPercent = reactionClosedAt ? Math.max(0, (remaining / DISMISS_DELAY) * 100) : 0;
+
+  if (!visible) return null;
 
   return (
     <div className="mx-3 mt-2 mb-1 bg-bg-base border border-border rounded flex flex-col shrink-0 overflow-hidden">

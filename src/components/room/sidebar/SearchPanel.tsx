@@ -1,5 +1,4 @@
 import { useEditorStore } from '@/stores/editorStore';
-import { TextInput } from '@vapor-ui/core';
 import { useState } from 'react';
 import { VscFile, VscSearch } from 'react-icons/vsc';
 

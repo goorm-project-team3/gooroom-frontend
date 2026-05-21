@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 
 interface FloatingEmoji {
   id: number;
@@ -11,10 +11,11 @@ const EMOJIS = ['👍', '❤️', '👏'];
 
 export default function ReactionBar() {
   const [floatingEmojis, setFloatingEmojis] = useState<FloatingEmoji[]>([]);
+  const idRef = useRef(0);
 
   function handleClick(emoji: string, e: React.MouseEvent<HTMLButtonElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
-    const id = Date.now();
+    const id = ++idRef.current;
 
     setFloatingEmojis((prev) => [
       ...prev,
