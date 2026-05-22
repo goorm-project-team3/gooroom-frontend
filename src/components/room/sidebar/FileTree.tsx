@@ -400,7 +400,7 @@ export default function FileTree() {
                 onMouseEnter={() => setHovered(true)}
                 onMouseLeave={() => setHovered(false)}
               >
-                <Collapsible.Trigger className="flex-1 flex items-center gap-1 px-2 py-[5px] select-none hover:bg-bg-hover cursor-pointer">
+                <Collapsible.Trigger className="w-full flex items-center gap-1 py-[3px] hover:bg-bg-input text-text-secondary hover:text-text-primary transition-colors cursor-pointer">
                   {open ? <VscChevronDown size={14} /> : <VscChevronRight size={14} />}
                   <Text
                     typography="body3"
