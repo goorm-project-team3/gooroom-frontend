@@ -81,8 +81,8 @@ function InlineInput({
 
 // --- Folder Node ---
 function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
-  const [open, setOpen] = useState(true);
-  const [adding, setAdding] = useState<AddingType>(null);
+  const [localOpen, setLocalOpen] = useState(true);
+  const [localAdding, setLocalAdding] = useState<AddingType>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const { addNode, moveNode } = useFileTreeStore();
   const { draggingId, setDraggingId } = useContext(DragContext);
@@ -91,13 +91,9 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
 
   const paddingLeft = depth * 12 + 8;
 
-  useEffect(() => {
-    if (pendingAdd?.parentId === node.id) {
-      setAdding(pendingAdd.type);
-      setOpen(true);
-      clearPendingAdd();
-    }
-  }, [pendingAdd]);
+  const isTargeted = pendingAdd?.parentId === node.id;
+  const open = isTargeted ? true : localOpen;
+  const adding: AddingType = isTargeted ? pendingAdd!.type : localAdding;
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -106,7 +102,7 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
     if (draggingId && draggingId !== node.id) {
       moveNode(draggingId, node.id);
       setDraggingId(null);
-      setOpen(true);
+      setLocalOpen(true);
     }
   };
 
@@ -125,7 +121,7 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
       onDrop={handleDrop}
       className={`${isDragOver ? 'outline outline-1 outline-border-focus rounded' : ''} ${draggingId === node.id ? 'opacity-50' : ''}`}
     >
-      <Collapsible.Root open={open} onOpenChange={setOpen}>
+      <Collapsible.Root open={open} onOpenChange={setLocalOpen}>
         {/* 드래그 소스: 폴더 헤더 */}
         <Collapsible.Trigger
           draggable
@@ -164,9 +160,13 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
               }
               onConfirm={(name) => {
                 addNode(node.id, name, adding);
-                setAdding(null);
+                setLocalAdding(null);
+                if (isTargeted) clearPendingAdd();
               }}
-              onCancel={() => setAdding(null)}
+              onCancel={() => {
+                setLocalAdding(null);
+                if (isTargeted) clearPendingAdd();
+              }}
             />
           )}
         </Collapsible.Panel>
