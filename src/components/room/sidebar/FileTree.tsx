@@ -12,6 +12,7 @@ import {
   VscNewFolder,
   VscFolderOpened,
   VscTrash,
+  VscCloudUpload,
 } from 'react-icons/vsc';
 
 // --- Drag Context ---
@@ -213,6 +214,27 @@ export default function FileTree() {
   const [isRootDragOver, setIsRootDragOver] = useState(false);
   const roomName = useRoomStore((s) => s.roomName);
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importTargetId, setImportTargetId] = useState<string | null>(undefined!);
+
+  const handleImportClick = (parentId: string | null) => {
+    setImportTargetId(parentId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files ?? []);
+    selectedFiles.forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const content = event.target?.result as string;
+        addNode(importTargetId, file.name, 'file', content);
+      };
+      reader.readAsText(file);
+    });
+    e.target.value = '';
+  };
+
   // 컨텍스트 메뉴 state
   const [ctxMenu, setCtxMenu] = useState<{
     open: boolean;
@@ -297,6 +319,13 @@ export default function FileTree() {
               setIsRootDragOver(false);
             }}
           >
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileInputChange}
+            />
             <Collapsible.Root open={open} onOpenChange={setOpen} className="flex flex-col">
               <div
                 className="flex items-center"
@@ -315,6 +344,14 @@ export default function FileTree() {
                 <div
                   className={`flex gap-0.5 pr-2 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}
                 >
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleImportClick(null)}
+                    className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                    title="File Import"
+                  >
+                    <VscCloudUpload size={14} />
+                  </button>
                   <button
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {

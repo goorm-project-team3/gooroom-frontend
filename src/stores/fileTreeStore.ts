@@ -4,12 +4,18 @@ export interface FileNode {
   id: string;
   name: string;
   type: 'file' | 'folder';
+  content?: string;
   children?: FileNode[];
 }
 
 interface FileTreeStore {
   files: FileNode[];
-  addNode: (parentId: string | null, name: string, type: 'file' | 'folder') => string;
+  addNode: (
+    parentId: string | null,
+    name: string,
+    type: 'file' | 'folder',
+    content?: string,
+  ) => string;
   removeNode: (id: string) => void;
   getDescendantFileIds: (nodeId: string) => string[];
   moveNode: (nodeId: string, newParentId: string | null) => void;
@@ -25,18 +31,74 @@ const INITIAL_TREE: FileNode[] = [
     name: 'src',
     type: 'folder',
     children: [
-      { id: 'file-1', name: 'main.tsx', type: 'file' },
-      { id: 'file-2', name: 'App.tsx', type: 'file' },
+      {
+        id: 'file-1',
+        name: 'main.tsx',
+        type: 'file',
+        content: `import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);`,
+      },
+      {
+        id: 'file-2',
+        name: 'App.tsx',
+        type: 'file',
+        content: `export default function App() {
+  return <div>Hello, GooRoom!</div>;
+}`,
+      },
       {
         id: 'folder-components',
         name: 'components',
         type: 'folder',
-        children: [{ id: 'file-3', name: 'button.tsx', type: 'file' }],
+        children: [
+          {
+            id: 'file-3',
+            name: 'button.tsx',
+            type: 'file',
+            content: `interface ButtonProps {
+  label: string;
+  onClick: () => void;
+}
+
+export default function Button({ label, onClick }: ButtonProps) {
+  return <button onClick={onClick}>{label}</button>;
+}`,
+          },
+        ],
       },
     ],
   },
-  { id: 'file-4', name: 'index.html', type: 'file' },
-  { id: 'file-5', name: 'package.json', type: 'file' },
+  {
+    id: 'file-4',
+    name: 'index.html',
+    type: 'file',
+    content: `<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GooRoom</title>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>`,
+  },
+  {
+    id: 'file-5',
+    name: 'package.json',
+    type: 'file',
+    content: `{
+  "name": "gooroom",
+  "version": "1.0.0"
+}`,
+  },
 ];
 
 function collectFileIds(node: FileNode): string[] {
@@ -78,19 +140,19 @@ function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
 
 function isDescendant(nodes: FileNode[], nodeId: string, poentialAncestorId: string): boolean {
   const ancestor = findNode(nodes, poentialAncestorId);
-  if (!ancestor || ancestor.type === 'folder') return false;
+  if (!ancestor || ancestor.type !== 'folder') return false;
   return !!findNode(ancestor.children ?? [], nodeId);
 }
 
 export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
   files: INITIAL_TREE,
 
-  addNode: (parentId, name, type) => {
+  addNode: (parentId, name, type, content) => {
     const newNode: FileNode = {
       id: generateId(),
       name,
       type,
-      ...(type === 'folder' ? { children: [] } : {}),
+      ...(type === 'folder' ? { children: [] } : { content: content ?? '' }),
     };
     set((state) => ({ files: addNodeToTree(state.files, parentId, newNode) }));
     return newNode.id;
