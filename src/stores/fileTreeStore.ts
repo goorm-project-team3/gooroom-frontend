@@ -19,6 +19,7 @@ interface FileTreeStore {
   removeNode: (id: string) => void;
   getDescendantFileIds: (nodeId: string) => string[];
   moveNode: (nodeId: string, newParentId: string | null) => void;
+  updateFileContent: (fileId: string, content: string) => void;
 }
 
 function generateId() {
@@ -101,6 +102,16 @@ export default function Button({ label, onClick }: ButtonProps) {
   },
 ];
 
+function updateContentInTree(nodes: FileNode[], fileId: string, content: string): FileNode[] {
+  return nodes.map((node) => {
+    if (node.id === fileId) return { ...node, content };
+    if (node.children) {
+      return { ...node, children: updateContentInTree(node.children, fileId, content) };
+    }
+    return node;
+  });
+}
+
 function collectFileIds(node: FileNode): string[] {
   if (node.type === 'file') return [node.id];
   return node.children?.flatMap(collectFileIds) ?? [];
@@ -177,5 +188,9 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
     const node = findNode(get().files, nodeId);
     if (!node) return [];
     return collectFileIds(node);
+  },
+
+  updateFileContent: (fileId, content) => {
+    set((state) => ({ files: updateContentInTree(state.files, fileId, content) }));
   },
 }));

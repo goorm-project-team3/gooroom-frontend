@@ -48,6 +48,11 @@ export default function MonacoEditor() {
         language={language}
         theme="vs-dark"
         value={content}
+        onChange={(value) => {
+          if (activeFileId) {
+            useFileTreeStore.getState().updateFileContent(activeFileId, value ?? '');
+          }
+        }}
         options={{
           fontSize: 13,
           minimap: { enabled: true },
