@@ -12,6 +12,7 @@ interface FileTreeStore {
   addNode: (parentId: string | null, name: string, type: 'file' | 'folder') => string;
   removeNode: (id: string) => void;
   getDescendantFileIds: (nodeId: string) => string[];
+  moveNode: (nodeId: string, newParentId: string | null) => void;
 }
 
 function generateId() {
@@ -75,6 +76,12 @@ function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
   return null;
 }
 
+function isDescendant(nodes: FileNode[], nodeId: string, poentialAncestorId: string): boolean {
+  const ancestor = findNode(nodes, poentialAncestorId);
+  if (!ancestor || ancestor.type === 'folder') return false;
+  return !!findNode(ancestor.children ?? [], nodeId);
+}
+
 export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
   files: INITIAL_TREE,
 
@@ -91,6 +98,17 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
 
   removeNode: (nodeId) => {
     set((state) => ({ files: removeNodeFromTree(state.files, nodeId) }));
+  },
+
+  moveNode: (nodeId, newParentId) => {
+    set((state) => {
+      if (nodeId === newParentId) return state;
+      if (newParentId !== null && isDescendant(state.files, nodeId, newParentId)) return state;
+      const nodeToMove = findNode(state.files, nodeId);
+      if (!nodeToMove) return state;
+      const withoutNode = removeNodeFromTree(state.files, nodeId);
+      return { files: addNodeToTree(withoutNode, newParentId, nodeToMove) };
+    });
   },
 
   getDescendantFileIds: (nodeId) => {
