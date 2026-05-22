@@ -2,23 +2,29 @@ import { useEditorStore } from '@/stores/editorStore';
 import { Breadcrumb } from '@vapor-ui/core';
 import { VscChevronRight } from 'react-icons/vsc';
 import { Fragment } from 'react';
+import { FileNode, useFileTreeStore } from '@/stores/fileTreeStore';
 
-const FILE_PATHS: Record<string, string[]> = {
-  'file-1': ['src', 'main.tsx'],
-  'file-2': ['src', 'App.tsx'],
-  'file-3': ['src', 'components', 'button.tsx'],
-  'file-4': ['index.html'],
-  'file-5': ['package.json'],
-};
+function getPath(nodes: FileNode[], targetId: string, path: string[] = []): string[] | null {
+  for (const node of nodes) {
+    const cur = [...path, node.name];
+    if (node.id === targetId) return cur;
+    if (node.children) {
+      const found = getPath(node.children, targetId, cur);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 export default function EditorBreadcrumb() {
   const { activeFileId } = useEditorStore();
+  const { files } = useFileTreeStore();
 
   if (!activeFileId) {
     return <div className="h-[24px] bg-bg-base border-b border-border shrink-0" />;
   }
 
-  const segments = FILE_PATHS[activeFileId] ?? [activeFileId];
+  const segments = getPath(files, activeFileId) ?? [activeFileId];
 
   return (
     <div className="h-[24px] flex items-center px-3 bg-bg-base border-b border-border shrink-0 overflow-hidden">
