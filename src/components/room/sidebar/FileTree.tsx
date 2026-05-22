@@ -13,6 +13,7 @@ import {
   VscFolderOpened,
   VscTrash,
   VscCloudUpload,
+  VscFileSubmodule,
 } from 'react-icons/vsc';
 
 // --- Drag Context ---
@@ -37,6 +38,12 @@ const PendingAddCtx = createContext<PendingAddCtxValue>({
 });
 
 type AddingType = 'file' | 'folder' | null;
+
+function shouldSkipPath(relativePath: string): boolean {
+  return relativePath
+    .split('/')
+    .some((part) => ['node_modules', '.git', 'dist', 'build', '.next', 'out'].includes(part));
+}
 
 // --- InlineInput ---
 function InlineInput({
@@ -217,6 +224,12 @@ export default function FileTree() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importTargetId, setImportTargetId] = useState<string | null>(undefined!);
 
+  const folderInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    folderInputRef.current?.setAttribute('webkitdirectory', '');
+  }, []);
+
   const handleImportClick = (parentId: string | null) => {
     setImportTargetId(parentId);
     fileInputRef.current?.click();
@@ -232,6 +245,54 @@ export default function FileTree() {
       };
       reader.readAsText(file);
     });
+    e.target.value = '';
+  };
+
+  const handleFolderInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(e.target.files ?? []).filter(
+      (file) => !shouldSkipPath(file.webkitRelativePath),
+    );
+    if (selectedFiles.length === 0) return;
+
+    const pathToId = new Map<string, string>();
+
+    const dirPaths = new Set<string>();
+
+    for (const file of selectedFiles) {
+      const parts = file.webkitRelativePath.split('/');
+      for (let i = 1; i < parts.length; i++) {
+        dirPaths.add(parts.slice(0, i).join('/'));
+      }
+    }
+
+    const sortedDirPaths = Array.from(dirPaths).sort(
+      (a, b) => a.split('/').length - b.split('/').length,
+    );
+
+    for (const dirPath of sortedDirPaths) {
+      const parts = dirPath.split('/');
+      const name = parts[parts.length - 1];
+      const parentPath = parts.slice(0, -1).join('/');
+      const parentId = parentPath ? (pathToId.get(parentPath) ?? null) : null;
+      const newId = addNode(parentId, name, 'folder');
+      pathToId.set(dirPath, newId);
+    }
+
+    for (const file of selectedFiles) {
+      const parts = file.webkitRelativePath.split('/');
+      const parentPath = parts.slice(0, -1).join('/');
+      const parentId = pathToId.get(parentPath) ?? null;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        addNode(parentId, file.name, 'file', event.target?.result as string);
+      };
+      reader.onerror = () => {
+        addNode(parentId, file.name, 'file', '');
+      };
+      reader.readAsText(file);
+    }
+
     e.target.value = '';
   };
 
@@ -326,6 +387,13 @@ export default function FileTree() {
               className="hidden"
               onChange={handleFileInputChange}
             />
+            <input
+              ref={folderInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFolderInputChange}
+            />
             <Collapsible.Root open={open} onOpenChange={setOpen} className="flex flex-col">
               <div
                 className="flex items-center"
@@ -354,12 +422,20 @@ export default function FileTree() {
                   </button>
                   <button
                     onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => folderInputRef.current?.click()}
+                    className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                    title="Folder Import"
+                  >
+                    <VscFileSubmodule size={14} />
+                  </button>
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       setAdding('file');
                       setOpen(true);
                     }}
                     className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                    title="새 파일"
+                    title="New File"
                   >
                     <VscNewFile size={14} />
                   </button>
@@ -370,7 +446,7 @@ export default function FileTree() {
                       setOpen(true);
                     }}
                     className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                    title="새 폴더"
+                    title="New Folder"
                   >
                     <VscNewFolder size={14} />
                   </button>
