@@ -5,6 +5,8 @@ interface EditorStore {
   openedFiles: string[];
   setActiveFile: (fileId: string) => void;
   closeFile: (fileId: string) => void;
+  cursorPosition: { line: number; column: number };
+  setCursorPosition: (line: number, column: number) => void;
 }
 
 export const useEditorStore = create<EditorStore>((set) => ({
@@ -30,4 +32,6 @@ export const useEditorStore = create<EditorStore>((set) => ({
         activeFileId: newActiveFileId,
       };
     }),
+  cursorPosition: { line: 1, column: 1 },
+  setCursorPosition: (line, column) => set({ cursorPosition: { line, column } }),
 }));

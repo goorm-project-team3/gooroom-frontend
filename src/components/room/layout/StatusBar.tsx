@@ -17,7 +17,7 @@ const LANG_LABEL: Record<string, string> = {
 export default function StatusBar() {
   const { role } = useRoomStore();
   const { isFocusMode } = useFocusStore();
-  const { activeFileId } = useEditorStore();
+  const { activeFileId, cursorPosition } = useEditorStore();
   const { files } = useFileTreeStore();
 
   function getLanguageLabel(): string {
@@ -65,7 +65,9 @@ export default function StatusBar() {
         <span className="text-[11px] text-white opacity-80">UTF-8</span>
 
         {/* Cursor Position */}
-        <span className="text-[11px] text-white opacity-80">Ln 1, Col 1</span>
+        <span className="text-[11px] text-white opacity-80">
+          Ln {cursorPosition.line}, Col {cursorPosition.column}
+        </span>
       </div>
     </div>
   );

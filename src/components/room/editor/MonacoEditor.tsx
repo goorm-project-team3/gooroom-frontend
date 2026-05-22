@@ -2,6 +2,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import { FileNode, useFileTreeStore } from '@/stores/fileTreeStore';
 import { Editor } from '@monaco-editor/react';
 import { VscVscode } from 'react-icons/vsc';
+import type * as MonacoType from 'monaco-editor';
 
 const LANG_MAP: Record<string, string> = {
   tsx: 'typescript',
@@ -44,6 +45,11 @@ export default function MonacoEditor() {
   return (
     <div className="flex-1 overflow-hidden">
       <Editor
+        onMount={(editor: MonacoType.editor.IStandaloneCodeEditor) => {
+          editor.onDidChangeCursorPosition((e) => {
+            useEditorStore.getState().setCursorPosition(e.position.lineNumber, e.position.column);
+          });
+        }}
         height="100%"
         language={language}
         theme="vs-dark"
