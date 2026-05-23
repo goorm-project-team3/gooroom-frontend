@@ -1,26 +1,8 @@
 import { useEditorStore } from '@/stores/editorStore';
+import { FileNode, useFileTreeStore } from '@/stores/fileTreeStore';
 import { Editor } from '@monaco-editor/react';
 import { VscVscode } from 'react-icons/vsc';
-
-const MOCK_CONTENTS: Record<string, string> = {
-  'file-1': `import React from 'react';\nimport ReactDOM from 'react-dom/client';\nimport App from
-  './App';\n\nReactDOM.createRoot(document.getElementById('root')!).render(\n  <React.StrictMode>\n    <App />\n
-  </React.StrictMode>\n);`,
-  'file-2': `export default function App() {\n  return <div>Hello, GooRoom!</div>;\n}`,
-  'file-3': `interface ButtonProps {\n  label: string;\n  onClick: () => void;\n}\n\nexport default function Button({
-  label, onClick }: ButtonProps) {\n  return <button onClick={onClick}>{label}</button>;\n}`,
-  'file-4': `<!DOCTYPE html>\n<html lang="ko">\n  <head>\n    <meta charset="UTF-8" />\n    <title>GooRoom</title>\n
-  </head>\n  <body>\n    <div id="root"></div>\n  </body>\n</html>`,
-  'file-5': `{\n  "name": "gooroom",\n  "version": "1.0.0"\n}`,
-};
-
-const FILE_NAMES: Record<string, string> = {
-  'file-1': 'main.tsx',
-  'file-2': 'App.tsx',
-  'file-3': 'button.tsx',
-  'file-4': 'index.html',
-  'file-5': 'package.json',
-};
+import type * as MonacoType from 'monaco-editor';
 
 const LANG_MAP: Record<string, string> = {
   tsx: 'typescript',
@@ -32,14 +14,20 @@ const LANG_MAP: Record<string, string> = {
   json: 'json',
 };
 
-const getLanguage = (fileId: string): string => {
-  const name = FILE_NAMES[fileId] ?? '';
-  const ext = name.split('.').pop() ?? '';
-  return LANG_MAP[ext] ?? 'plaintext';
-};
+function findNode(nodes: FileNode[], targetId: string): FileNode | null {
+  for (const node of nodes) {
+    if (node.id === targetId) return node;
+    if (node.children) {
+      const found = findNode(node.children, targetId);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 export default function MonacoEditor() {
   const { activeFileId } = useEditorStore();
+  const { files } = useFileTreeStore();
 
   if (!activeFileId) {
     return (
@@ -49,16 +37,28 @@ export default function MonacoEditor() {
     );
   }
 
-  const content = activeFileId ? (MOCK_CONTENTS[activeFileId] ?? '') : '';
-  const language = activeFileId ? getLanguage(activeFileId) : 'plaintext';
+  const node = findNode(files, activeFileId);
+  const content = node?.content ?? '';
+  const ext = node?.name.split('.').pop() ?? '';
+  const language = LANG_MAP[ext] ?? 'plaintext';
 
   return (
     <div className="flex-1 overflow-hidden">
       <Editor
+        onMount={(editor: MonacoType.editor.IStandaloneCodeEditor) => {
+          editor.onDidChangeCursorPosition((e) => {
+            useEditorStore.getState().setCursorPosition(e.position.lineNumber, e.position.column);
+          });
+        }}
         height="100%"
         language={language}
         theme="vs-dark"
         value={content}
+        onChange={(value) => {
+          if (activeFileId) {
+            useFileTreeStore.getState().updateFileContent(activeFileId, value ?? '');
+          }
+        }}
         options={{
           fontSize: 13,
           minimap: { enabled: true },
