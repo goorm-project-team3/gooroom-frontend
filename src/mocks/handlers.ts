@@ -54,10 +54,10 @@ export const handlers = [
       { status: 200 },
     );
   }),
-  http.get('/api/rooms/:roomId/chat', () => {                                                                                                                                                                                                                                                   
-    return HttpResponse.json(                                                                                                                                                                                                                                                                   
-      {                                                                                                                                                                                                                                                                                         
-        success: true,                                                                                                                                                                                                                                                                          
+  http.get('/api/rooms/:roomId/chat', () => {
+    return HttpResponse.json(
+      {
+        success: true,
         data: {
           // BE가 Collections.reverse()로 ASC 변환 후 반환 — 오래된 메시지가 앞
           messages: [

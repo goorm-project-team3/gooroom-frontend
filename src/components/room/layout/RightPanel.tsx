@@ -1,11 +1,13 @@
 import ChatInput from '../chat/ChatInput';
 import ChatMessages from '../chat/ChatMessages';
-import ReactionBar from '../chat/ReactionBar';
+import ReactionBar, { type ReactionBarHandle } from '../chat/ReactionBar';
 import ReactionCard from '../chat/ReactionCard';
 import { useRoomStore } from '@/stores/roomStore';
 import { useChatHistory } from '@/hooks/useChatHistory';
 import { useChatSocket } from '@/hooks/useChatSocket';
 import { useRef, useState, useCallback } from 'react';
+import { useReactionSocket } from '@/hooks/useReactionSocket';
+import type { EmojiReactionBroadcast } from '@/types/emojiReaction';
 
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
@@ -13,9 +15,32 @@ const MAX_WIDTH = 480;
 export default function RightPanel() {
   const roomId = useRoomStore((s) => s.roomId);
   const numericRoomId = roomId ? Number(roomId) : 0;
+  const myUserId = useRoomStore((s) => s.myUserId);
+
+  /** ReactionBar의 showFloatingFromBar 메서드에 대한 참조 */
+  const reactionBarRef = useRef<ReactionBarHandle>(null);
+
+  /**
+   * 브로드캐스트 수신 시 ReactionBar에 애니메이션을 표시하는 콜백
+   *
+   * @param broadcast 수신된 이모지 리액션 브로드캐스트 페이로드
+   */
+  const handleReactionReceive = useCallback(
+    (broadcast: EmojiReactionBroadcast) => {
+      if (broadcast.userId === myUserId) return; // 본인 발송 리액션은 이미 버튼 클릭 시 애니메이션 처리했으므로 무시
+      reactionBarRef.current?.showFloatingFromBar(broadcast.emoji);
+    },
+    [myUserId],
+  );
 
   useChatHistory(numericRoomId);
+
   const { sendMessage } = useChatSocket(numericRoomId);
+
+  const { sendReaction } = useReactionSocket({
+    roomId: numericRoomId,
+    onReceive: handleReactionReceive,
+  });
 
   const [width, setWidth] = useState(280);
   const isDragging = useRef(false);
@@ -67,7 +92,7 @@ export default function RightPanel() {
 
       <ReactionCard />
       <ChatMessages />
-      <ReactionBar />
+      <ReactionBar ref={reactionBarRef} sendReaction={sendReaction} />
       <ChatInput onSend={sendMessage} />
     </div>
   );

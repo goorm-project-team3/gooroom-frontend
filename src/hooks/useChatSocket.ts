@@ -5,10 +5,10 @@ import type { ChatBroadcast, ChatSendPayload } from '@/types/chat';
 
 /**
  * STOMP WebSocket 연결을 관리하고 채팅 메시지 송수신을 처리하는 훅
- * 
+ *
  * native WebSocket 사용
  * HttpOnly 쿠키로 인증 처리
- * 
+ *
  * @param roomId - 연결할 강의룸의 ID
  * @returns sendMessage 함수 (채팅 메시지 전송용)
  */

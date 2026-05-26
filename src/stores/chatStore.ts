@@ -44,10 +44,10 @@ export const useChatStore = create<ChatState>((set) => ({
       hasMore,
     })),
 
-    /**
-     * 실시간으로 수신한 새 메시지를 목록 뒤에 추가
-     * WebSocket 수신 시 호출
-     */
+  /**
+   * 실시간으로 수신한 새 메시지를 목록 뒤에 추가
+   * WebSocket 수신 시 호출
+   */
   appendMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
 
   /**
