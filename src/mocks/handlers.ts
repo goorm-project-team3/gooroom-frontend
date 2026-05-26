@@ -54,4 +54,59 @@ export const handlers = [
       { status: 200 },
     );
   }),
+  http.get('/api/rooms/:roomId/chat', () => {                                                                                                                                                                                                                                                   
+    return HttpResponse.json(                                                                                                                                                                                                                                                                   
+      {                                                                                                                                                                                                                                                                                         
+        success: true,                                                                                                                                                                                                                                                                          
+        data: {
+          // BE가 Collections.reverse()로 ASC 변환 후 반환 — 오래된 메시지가 앞
+          messages: [
+            {
+              messageId: 1,
+              userId: 1,
+              nickname: '김강사',
+              content: '안녕하세요! 오늘 강의를 시작하겠습니다.',
+              createdAt: '2026-05-24T14:00:00',
+              role: 'OWNER',
+            },
+            {
+              messageId: 2,
+              userId: 3,
+              nickname: '이학생',
+              content: '안녕하세요!',
+              createdAt: '2026-05-24T14:00:30',
+              role: 'USER',
+            },
+            {
+              messageId: 3,
+              userId: 1,
+              nickname: '김강사',
+              content: '모두 접속 확인되시나요?',
+              createdAt: '2026-05-24T14:01:00',
+              role: 'OWNER',
+            },
+            {
+              messageId: 4,
+              userId: 2,
+              nickname: '박학생',
+              content: '잘 부탁드립니다!',
+              createdAt: '2026-05-24T14:01:30',
+              role: 'USER',
+            },
+            {
+              messageId: 5,
+              userId: 1,
+              nickname: '김강사',
+              content: '오늘은 TypeScript 기초부터 시작할게요.',
+              createdAt: '2026-05-24T14:02:00',
+              role: 'OWNER',
+            },
+          ],
+          nextCursor: null,
+          hasMore: false,
+        },
+      },
+      { status: 200 },
+    );
+  }),
 ];

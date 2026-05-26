@@ -8,9 +8,11 @@ import EditorArea from '@/components/room/layout/EditorArea';
 import RightPanel from '@/components/room/layout/RightPanel';
 import BottomPanel from '@/components/room/layout/BottomPanel';
 import StatusBar from '@/components/room/layout/StatusBar';
+import { useParams } from 'react-router-dom';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
+  const { roomId } = useParams<{ roomId: string }>();
 
   const handleSidebarChange = (type: SidebarType) => {
     setActiveSidebar((prev) => (prev === type ? null : type));
@@ -18,6 +20,7 @@ export default function RoomPage() {
 
   useEffect(() => {
     useRoomStore.setState({
+      roomId: roomId ?? null,
       role: 'USER',
       members: [
         { id: 'user-1', name: '김강사', role: 'OWNER' },
@@ -28,7 +31,7 @@ export default function RoomPage() {
         { id: 'user-6', name: '임학생', role: 'USER' },
       ],
     });
-  }, []);
+  }, [roomId]);
 
   return (
     <div className="h-screen flex flex-col bg-bg-base overflow-hidden">

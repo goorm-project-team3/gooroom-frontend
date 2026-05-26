@@ -7,22 +7,26 @@ interface PrivateRouteProps {
   children: ReactNode;
 }
 
+// export default function PrivateRoute({ children }: PrivateRouteProps) {
+//   const [status, setStatus] = useState<'loading' | 'ok' | 'unauth'>('loading');
+
+//   useEffect(() => {
+//     api
+//       .get('auth/me')
+//       .then(() => setStatus('ok'))
+//       .catch(() => setStatus('unauth'));
+//   }, []);
+
+//   if (status === 'loading')
+//     return (
+//       <div className="flex items-center justify-center h-screen">
+//         <Spinner size="xl" />
+//       </div>
+//     );
+//   if (status === 'unauth') return <Navigate to="/login" replace />;
+//   return <>{children}</>;
+// }
+
 export default function PrivateRoute({ children }: PrivateRouteProps) {
-  const [status, setStatus] = useState<'loading' | 'ok' | 'unauth'>('loading');
-
-  useEffect(() => {
-    api
-      .get('auth/me')
-      .then(() => setStatus('ok'))
-      .catch(() => setStatus('unauth'));
-  }, []);
-
-  if (status === 'loading')
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Spinner size="xl" />
-      </div>
-    );
-  if (status === 'unauth') return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
