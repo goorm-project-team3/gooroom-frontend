@@ -1,5 +1,5 @@
 // STOMP /app/room/{roomId}/reaction 으로 전송하는 페이로드
-export interface EmojiReactionType {
+export interface EmojiReactionPayload {
     // 전송할 이모지 문자열
     emoji: string;
 }
