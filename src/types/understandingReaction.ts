@@ -18,7 +18,7 @@ export interface UnderstandingReactionBroadcast {
   /**
    * 브로드캐스트 유형
    */
-  type: 'UNDERSTANDING';
+  type: 'UNDERSTANDING_STATE';
   /**
    * 세션 활성화 여부
    */

@@ -8,11 +8,14 @@ import { useChatSocket } from '@/hooks/useChatSocket';
 import { useRef, useState, useCallback } from 'react';
 import { useReactionSocket } from '@/hooks/useReactionSocket';
 import type { EmojiReactionBroadcast } from '@/types/emojiReaction';
+import type { UnderstandingReactionBroadcast } from '@/types/understandingReaction';
+import { useUnderstandingReactionSocket } from '@/hooks/useUnderstandingReactionSocket';
 
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
 export default function RightPanel() {
+  const syncUnderstandingReaction = useRoomStore((s) => s.syncUnderstandingReaction);
   const roomId = useRoomStore((s) => s.roomId);
   const numericRoomId = roomId ? Number(roomId) : 0;
   const myUserId = useRoomStore((s) => s.myUserId);
@@ -32,6 +35,18 @@ export default function RightPanel() {
     },
     [myUserId],
   );
+
+  const handleUnderstandingReactionReceive = useCallback(
+    (broadcast: UnderstandingReactionBroadcast) => {
+      syncUnderstandingReaction(broadcast.isOpen, broadcast.counts, broadcast.closedAt);
+    },
+    [syncUnderstandingReaction],
+  );
+
+  const { send } = useUnderstandingReactionSocket({
+    roomId: numericRoomId,
+    onReceive: handleUnderstandingReactionReceive,
+  });
 
   useChatHistory(numericRoomId);
 
@@ -90,7 +105,7 @@ export default function RightPanel() {
         </span>
       </div>
 
-      <ReactionCard />
+      <ReactionCard send={send} />
       <ChatMessages />
       <ReactionBar ref={reactionBarRef} sendReaction={sendReaction} />
       <ChatInput onSend={sendMessage} />

@@ -9,19 +9,24 @@ import RightPanel from '@/components/room/layout/RightPanel';
 import BottomPanel from '@/components/room/layout/BottomPanel';
 import StatusBar from '@/components/room/layout/StatusBar';
 import { useParams } from 'react-router-dom';
+import { api } from '@/api/instance';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
   const { roomId } = useParams<{ roomId: string }>();
+  const setRoom = useRoomStore((s) => s.setRoom);
 
   const handleSidebarChange = (type: SidebarType) => {
     setActiveSidebar((prev) => (prev === type ? null : type));
   };
 
   useEffect(() => {
+    api.get(`/api/rooms/${roomId}`).then((res) => {
+      setRoom(String(res.data.id), res.data.data.userRole, res.data.data.name);
+    });
+
     useRoomStore.setState({
       roomId: roomId ?? null,
-      role: 'USER',
       members: [
         { id: 'user-1', name: '김강사', role: 'OWNER' },
         { id: 'user-2', name: '박학생', role: 'USER' },

@@ -26,6 +26,11 @@ interface RoomStore {
   reactionClosedAt: number | null;
   myUserId: number | null;
   setMyUserId: (id: number) => void;
+  syncUnderstandingReaction: (
+    isOpen: boolean,
+    counts: { understand: number; confused: number },
+    closedAt: number | null,
+  ) => void;
 }
 
 export const useRoomStore = create<RoomStore>()(
@@ -60,10 +65,22 @@ export const useRoomStore = create<RoomStore>()(
       reactionClosedAt: null,
       myUserId: null,
       setMyUserId: (id) => set({ myUserId: id }),
+      syncUnderstandingReaction: (isOpen, counts, closedAt) =>
+        set((state) => ({
+          isReactionOpen: isOpen,
+          reactionCounts: counts,
+          reactionClosedAt: closedAt,
+          myReaction: counts.understand === 0 && counts.confused === 0 ? null : state.myReaction,
+        })),
     }),
     {
       name: 'gooroom-user', // localStorage 키 이름
-      partialize: (state) => ({ myUserId: state.myUserId }), // myUserId만 저장
+      partialize: (state) => ({
+        myUserId: state.myUserId,
+        roomId: state.roomId,
+        role: state.role,
+        roomName: state.roomName,
+      }), // myUserId만 저장
     },
   ),
 );
