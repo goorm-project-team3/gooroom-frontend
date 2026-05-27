@@ -22,7 +22,7 @@ export default function RoomPage() {
 
   useEffect(() => {
     api.get(`/api/rooms/${roomId}`).then((res) => {
-      setRoom(String(res.data.id), res.data.data.userRole, res.data.data.name);
+      setRoom(String(res.data.data.id), res.data.data.userRole, res.data.data.name);
     });
 
     useRoomStore.setState({

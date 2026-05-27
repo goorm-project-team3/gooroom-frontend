@@ -109,4 +109,17 @@ export const handlers = [
       { status: 200 },
     );
   }),
+  http.get('/api/rooms/:roomId', ({ params }) => {
+    return HttpResponse.json(
+      {
+        success: true,
+        id: Number(params.roomId),
+        data: {
+          name: 'GooRoom Intro',
+          userRole: 'OWNER',
+        },
+      },
+      { status: 200 },
+    );
+  }),
 ];
