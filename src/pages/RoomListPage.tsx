@@ -86,7 +86,7 @@ export default function RoomListPage() {
           className="grid gap-4"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
         >
-          {data && data.length > 0 ? (
+          {Array.isArray(data) && data.length > 0 ? (
             data.map((room) => (
               <RoomCard key={room.id} room={room} onClick={() => handleEnterRoom(room)} />
             ))
