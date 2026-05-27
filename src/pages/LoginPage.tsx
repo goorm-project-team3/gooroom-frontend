@@ -15,8 +15,6 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post('/api/auth/login', { email, password });
-      console.log('[Login] response data:', res.data); // 전체 응답 확인
-      console.log('[Login] userId:', res.data.data?.userId); // userId 값 확인
       const userId = res.data.data.userId;
       setMyUserId(userId);
       navigate('/');

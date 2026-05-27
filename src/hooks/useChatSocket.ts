@@ -18,8 +18,6 @@ export const useChatSocket = (roomId: number) => {
   const setConnected = useChatStore((s) => s.setConnected);
 
   useEffect(() => {
-    console.log('[ChatSocket] roomId:', roomId, 'WS_URL:', import.meta.env.VITE_WS_URL);
-
     const client = new Client({
       brokerURL: import.meta.env.VITE_WS_URL.replace(/^http/, 'ws'),
       reconnectDelay: 3000,
