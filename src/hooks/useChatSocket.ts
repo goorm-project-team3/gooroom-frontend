@@ -51,7 +51,7 @@ export const useChatSocket = (roomId: number) => {
       client.deactivate();
       setConnected(false);
     };
-  }, [roomId]);
+  }, [roomId, appendMessage, setConnected]);
 
   /**
    * STOMP를 통해 메시지를 서버로 전송하는 함수

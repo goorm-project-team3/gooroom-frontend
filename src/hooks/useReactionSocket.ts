@@ -45,7 +45,7 @@ export const useReactionSocket = ({ roomId, onReceive }: UseReactionSocketOption
     return () => {
       client.deactivate();
     };
-  }, [roomId]);
+  }, [roomId, onReceive]);
 
   /**
    * STOMP를 통해 이모지 리액션을 서버로 전송하는 함수

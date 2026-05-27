@@ -50,7 +50,7 @@ export const useUnderstandingReactionSocket = ({
     return () => {
       client.deactivate();
     };
-  }, [roomId]);
+  }, [roomId, onReceive]);
 
   /**
    * STOMP를 통해 이해도 반응 이벤트를 서버로 전송하는 함수

@@ -36,7 +36,7 @@ export default function RoomPage() {
         { id: 'user-6', name: '임학생', role: 'USER' },
       ],
     });
-  }, [roomId]);
+  }, [roomId, setRoom]);
 
   return (
     <div className="h-screen flex flex-col bg-bg-base overflow-hidden">
