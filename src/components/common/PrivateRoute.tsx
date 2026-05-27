@@ -1,7 +1,8 @@
-import { Navigate } from 'react-router-dom';
-import { useEffect, useState, type ReactNode } from 'react';
-import { api } from '@/api/instance';
-import { Spinner } from '@vapor-ui/core';
+// import { Navigate } from 'react-router-dom';
+// import { useEffect, useState, type ReactNode } from 'react';
+// import { api } from '@/api/instance';
+// import { Spinner } from '@vapor-ui/core';
+import { type ReactNode } from 'react';
 
 interface PrivateRouteProps {
   children: ReactNode;
