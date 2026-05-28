@@ -3,6 +3,7 @@ import { useFileTreeStore, type FileNode } from '@/stores/fileTreeStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Collapsible, Text } from '@vapor-ui/core';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { api } from '@/api/instance';
 import {
   VscChevronDown,
   VscChevronRight,
@@ -182,6 +183,23 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const { openCtxMenu } = useContext(CtxmenuContext);
   const isActive = activeFileId === node.id;
 
+  const roomId = useRoomStore((s) => s.roomId);
+  const { updateFileContent } = useFileTreeStore();
+
+  const handleClick = async () => {
+    setActiveFile(node.id);
+
+    if (node.content === undefined) return;
+
+    try {
+      const res = await api.get(`/api/rooms/${roomId}/files/${node.id}`);
+      updateFileContent(node.id, res.data.content ?? '');
+    } catch (e) {
+      console.error('파일 내용 불러오기 실패', e);
+      updateFileContent(node.id, '');
+    }
+  };
+
   if (node.type === 'folder') return <FolderNodeItem node={node} depth={depth} />;
 
   return (
@@ -200,7 +218,7 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
           : 'text-text-secondary hover:bg-bg-input hover:text-text-primary'
       } ${draggingId === node.id ? 'opacity-50' : ''}`}
       style={{ paddingLeft: depth * 12 + 8 + 18 }}
-      onClick={() => setActiveFile(node.id)}
+      onClick={handleClick}
     >
       <VscFile size={14} />
       <Text typography="body3" className="ml-1 text-text-secondary">
