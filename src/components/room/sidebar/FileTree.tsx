@@ -85,7 +85,7 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const [localOpen, setLocalOpen] = useState(true);
   const [localAdding, setLocalAdding] = useState<AddingType>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const { addNode, moveNode } = useFileTreeStore();
+  const { addNode, moveNode, addServerFile } = useFileTreeStore();
   const { draggingId, setDraggingId } = useContext(DragContext);
   const { openCtxMenu } = useContext(CtxmenuContext);
   const { pendingAdd, clearPendingAdd } = useContext(PendingAddCtx);
@@ -95,6 +95,8 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const isTargeted = pendingAdd?.parentId === node.id;
   const open = isTargeted ? true : localOpen;
   const adding: AddingType = isTargeted ? pendingAdd!.type : localAdding;
+
+  const roomId = useRoomStore((s) => s.roomId);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -159,8 +161,27 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
                   <VscFolder size={14} className="text-[#e8ab70]" />
                 )
               }
-              onConfirm={(name) => {
-                addNode(node.id, name, adding);
+              onConfirm={async (name) => {
+                if (adding === 'folder') {
+                  addNode(node.id, name, 'folder');
+                } else {
+                  try {
+                    const res = await api.post(`/api/rooms/${roomId}/files`, {
+                      name,
+                      language: null,
+                      content: '',
+                    });
+                    addServerFile(node.id, {
+                      id: String(res.data.id),
+                      name: res.data.name,
+                      type: 'file',
+                      language: res.data.language ?? undefined,
+                      content: '',
+                    });
+                  } catch (e) {
+                    console.error('생성 실패', e);
+                  }
+                }
                 setLocalAdding(null);
                 if (isTargeted) clearPendingAdd();
               }}
@@ -494,8 +515,27 @@ export default function FileTree() {
                           <VscFolder size={14} className="text-[#e8ab70]" />
                         )
                       }
-                      onConfirm={(name) => {
-                        addNode(null, name, adding);
+                      onConfirm={async (name) => {
+                        if (adding === 'folder') {
+                          addNode(null, name, 'folder');
+                        } else {
+                          try {
+                            const res = await api.post(`/api/rooms/${roomId}/files`, {
+                              name,
+                              language: null,
+                              content: '',
+                            });
+                            addServerFile(null, {
+                              id: String(res.data.id),
+                              name: res.data.name,
+                              type: 'file',
+                              language: res.data.language ?? undefined,
+                              content: '',
+                            });
+                          } catch (e) {
+                            console.error('생성 실패', e);
+                          }
+                        }
                         setAdding(null);
                       }}
                       onCancel={() => setAdding(null)}
