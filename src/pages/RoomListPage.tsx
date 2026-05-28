@@ -13,7 +13,7 @@ import JoinRoomModal from '@/components/room/JoinRoomModal';
 export default function RoomListPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
-  const { setRoom } = useRoomStore();
+  const { setRoom, clearUser } = useRoomStore();
   const myNickname = useRoomStore((s) => s.myNickname);
   const navigate = useNavigate();
 
@@ -25,6 +25,12 @@ export default function RoomListPage() {
   const handleEnterRoom = (room: Room) => {
     setRoom(String(room.id), room.userRole, room.name);
     navigate(`/rooms/${room.id}`);
+  };
+
+  const handleLogout = async () => {
+    await api.post('/api/auth/logout');
+    clearUser();
+    navigate('/login');
   };
 
   if (isLoading) return <Spinner size="xl" />;
@@ -48,6 +54,9 @@ export default function RoomListPage() {
               <span className="text-[13px] text-text-primary">{myNickname}</span>
             </div>
           )}
+          <Button onClick={handleLogout} colorPalette="secondary" variant="outline" size="sm">
+            로그아웃
+          </Button>
         </div>
       </header>
 
