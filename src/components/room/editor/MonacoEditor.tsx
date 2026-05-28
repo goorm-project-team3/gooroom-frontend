@@ -38,9 +38,18 @@ export default function MonacoEditor() {
   }
 
   const node = findNode(files, activeFileId);
+
+  if (activeFileId && node && node.content === undefined) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-bg-base text-text-dim text-sm">
+        Loading...
+      </div>
+    );
+  }
+
   const content = node?.content ?? '';
   const ext = node?.name.split('.').pop() ?? '';
-  const language = LANG_MAP[ext] ?? 'plaintext';
+  const language = LANG_MAP[ext] ?? node?.language ?? 'plaintext';
 
   return (
     <div className="flex-1 overflow-hidden">
