@@ -393,14 +393,30 @@ export default function FileTree() {
     setCtxMenu(null);
   };
 
-  const handleCtxDelete = () => {
+  const handleCtxDelete = async () => {
     if (!ctxMenu?.targetId) return;
-    if (ctxMenu.targetType === 'file') {
-      closeFile(ctxMenu.targetId);
+
+    if (ctxMenu.targetType === 'folder') {
+      const descendantIds = getDescendantFileIds(ctxMenu.targetId);
+      try {
+        await Promise.all(
+          descendantIds.map((fileId) => api.delete(`/api/rooms/${roomId}/files/${fileId}`)),
+        );
+        descendantIds.forEach(closeFile);
+        removeNode(ctxMenu.targetId);
+      } catch (e) {
+        console.error('파일 삭제 실패', e);
+      }
     } else {
-      getDescendantFileIds(ctxMenu.targetId).forEach(closeFile);
+      try {
+        await api.delete(`/api/rooms/${roomId}/files/${ctxMenu.targetId}`);
+        closeFile(ctxMenu.targetId);
+        removeNode(ctxMenu.targetId);
+      } catch (e) {
+        console.error('파일 삭제 실패', e);
+      }
     }
-    removeNode(ctxMenu.targetId);
+
     setCtxMenu(null);
   };
 
