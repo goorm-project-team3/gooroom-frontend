@@ -147,4 +147,33 @@ export const handlers = [
       { status: 200 },
     );
   }),
+  http.get('/api/rooms/:roomId/files/:fileId', ({ params }) => {
+    const fileId = Number(params.fileId);
+
+    const mockContents: Record<number, string> = {
+      1: `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, GooRoom!");
+    }
+}`,
+      2: `public class Solution {
+    public int solve(int n) {
+        return n * 2;
+    }
+}`,
+    };
+
+    return HttpResponse.json(
+      {
+        id: fileId,
+        name: fileId === 1 ? 'Main.java' : 'Solution.java',
+        language: 'java',
+        content: mockContents[fileId] ?? '',
+        createdBy: { id: 1, nickname: '김강사' },
+        createdAt: '2026-05-28T00:00:00',
+        updatedAt: '2026-05-28T00:00:00',
+      },
+      { status: 200 },
+    );
+  }),
 ];
