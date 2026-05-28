@@ -2,7 +2,11 @@ import { useEditorStore } from '@/stores/editorStore';
 import { FileNode, useFileTreeStore } from '@/stores/fileTreeStore';
 import { Editor } from '@monaco-editor/react';
 import { VscVscode } from 'react-icons/vsc';
-import type * as MonacoType from 'monaco-editor';
+import * as MonacoType from 'monaco-editor';
+import { useRoomStore } from '@/stores/roomStore';
+import { useEffect, useRef } from 'react';
+import { useFileEditSocket } from '@/hooks/useFileEditSocket';
+import { api } from '@/api/instance';
 
 const LANG_MAP: Record<string, string> = {
   tsx: 'typescript',
@@ -28,6 +32,22 @@ function findNode(nodes: FileNode[], targetId: string): FileNode | null {
 export default function MonacoEditor() {
   const { activeFileId } = useEditorStore();
   const { files } = useFileTreeStore();
+  const role = useRoomStore((s) => s.role);
+  const roomId = useRoomStore((s) => s.roomId);
+
+  const editorRef = useRef<MonacoType.editor.IStandaloneCodeEditor | null>(null);
+  const versionRef = useRef<number>(0);
+
+  const activeFileIdRef = useRef(activeFileId);
+  useEffect(() => {
+    activeFileIdRef.current = activeFileId;
+  }, [activeFileId]);
+
+  const { publishEdit, pendingSyncContentRef, isSyncingRef } = useFileEditSocket(
+    activeFileId,
+    editorRef,
+    versionRef,
+  );
 
   if (!activeFileId) {
     return (
@@ -54,15 +74,49 @@ export default function MonacoEditor() {
   return (
     <div className="flex-1 overflow-hidden">
       <Editor
+        key={activeFileId}
+        defaultValue={content}
+        height="100%"
+        theme="vs-dark"
+        language={language}
         onMount={(editor: MonacoType.editor.IStandaloneCodeEditor) => {
+          editorRef.current = editor;
+
+          if (pendingSyncContentRef.current !== null) {
+            editor.setValue(pendingSyncContentRef.current);
+            pendingSyncContentRef.current = null;
+          }
+
           editor.onDidChangeCursorPosition((e) => {
             useEditorStore.getState().setCursorPosition(e.position.lineNumber, e.position.column);
           });
+
+          if (role === 'OWNER') {
+            editor.onDidChangeModelContent((e) => {
+              if (isSyncingRef.current) return;
+              const changes = e.changes.map((change) => ({
+                range: {
+                  startLineNumber: change.range.startLineNumber,
+                  startColumn: change.range.startColumn,
+                  endLineNumber: change.range.endLineNumber,
+                  endColumn: change.range.endColumn,
+                },
+                text: change.text,
+              }));
+              publishEdit(changes);
+            });
+
+            editor.addCommand(MonacoType.KeyMod.CtrlCmd | MonacoType.KeyCode.KeyS, () => {
+              const fileId = activeFileIdRef.current;
+              if (!fileId || !roomId) return;
+              api
+                .put(`/api/rooms/${roomId}/files/${fileId}`, {
+                  content: editor.getValue(),
+                })
+                .catch(() => {});
+            });
+          }
         }}
-        height="100%"
-        language={language}
-        theme="vs-dark"
-        value={content}
         onChange={(value) => {
           if (activeFileId) {
             useFileTreeStore.getState().updateFileContent(activeFileId, value ?? '');
@@ -77,6 +131,7 @@ export default function MonacoEditor() {
           renderLineHighlight: 'line',
           tabSize: 2,
           padding: { top: 8 },
+          readOnly: role !== 'OWNER',
         }}
       />
     </div>

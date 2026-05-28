@@ -11,6 +11,7 @@ import BottomPanel from '@/components/room/layout/BottomPanel';
 import StatusBar from '@/components/room/layout/StatusBar';
 import { useParams } from 'react-router-dom';
 import { api } from '@/api/instance';
+import { useEditorStore } from '@/stores/editorStore';
 
 export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
@@ -23,6 +24,8 @@ export default function RoomPage() {
   };
 
   useEffect(() => {
+    useEditorStore.setState({ activeFileId: null, openedFiles: [] });
+
     Promise.all([api.get(`/api/rooms/${roomId}`), api.get(`/api/rooms/${roomId}/files`)]).then(
       ([roomRes, filesRes]) => {
         const { id, userRole, name } = roomRes.data.data;
