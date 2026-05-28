@@ -4,12 +4,16 @@ export interface FileNode {
   id: string;
   name: string;
   type: 'file' | 'folder';
+  language?: string;
   content?: string;
   children?: FileNode[];
 }
 
 interface FileTreeStore {
   files: FileNode[];
+  setFilesFromServer: (
+    serverFiles: Array<{ id: number; name: string; language: string | null }>,
+  ) => void;
   addNode: (
     parentId: string | null,
     name: string,
@@ -25,82 +29,6 @@ interface FileTreeStore {
 function generateId() {
   return `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
-
-const INITIAL_TREE: FileNode[] = [
-  {
-    id: 'folder-src',
-    name: 'src',
-    type: 'folder',
-    children: [
-      {
-        id: 'file-1',
-        name: 'main.tsx',
-        type: 'file',
-        content: `import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);`,
-      },
-      {
-        id: 'file-2',
-        name: 'App.tsx',
-        type: 'file',
-        content: `export default function App() {
-  return <div>Hello, GooRoom!</div>;
-}`,
-      },
-      {
-        id: 'folder-components',
-        name: 'components',
-        type: 'folder',
-        children: [
-          {
-            id: 'file-3',
-            name: 'button.tsx',
-            type: 'file',
-            content: `interface ButtonProps {
-  label: string;
-  onClick: () => void;
-}
-
-export default function Button({ label, onClick }: ButtonProps) {
-  return <button onClick={onClick}>{label}</button>;
-}`,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 'file-4',
-    name: 'index.html',
-    type: 'file',
-    content: `<!DOCTYPE html>
-<html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <title>GooRoom</title>
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
-</html>`,
-  },
-  {
-    id: 'file-5',
-    name: 'package.json',
-    type: 'file',
-    content: `{
-  "name": "gooroom",
-  "version": "1.0.0"
-}`,
-  },
-];
 
 function updateContentInTree(nodes: FileNode[], fileId: string, content: string): FileNode[] {
   return nodes.map((node) => {
@@ -156,7 +84,7 @@ function isDescendant(nodes: FileNode[], nodeId: string, poentialAncestorId: str
 }
 
 export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
-  files: INITIAL_TREE,
+  files: [],
 
   addNode: (parentId, name, type, content) => {
     const newNode: FileNode = {
@@ -192,5 +120,15 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
 
   updateFileContent: (fileId, content) => {
     set((state) => ({ files: updateContentInTree(state.files, fileId, content) }));
+  },
+
+  setFilesFromServer: (serverFiles) => {
+    const nodes: FileNode[] = serverFiles.map((file) => ({
+      id: String(file.id),
+      name: file.name,
+      type: 'file' as const,
+      language: file.language ?? undefined,
+    }));
+    set({ files: nodes });
   },
 }));
