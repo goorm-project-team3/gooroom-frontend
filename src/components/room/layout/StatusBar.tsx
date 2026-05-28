@@ -2,6 +2,7 @@ import { useEditorStore } from '@/stores/editorStore';
 import { useFileTreeStore } from '@/stores/fileTreeStore';
 import { useFocusStore } from '@/stores/focusStore';
 import { useRoomStore } from '@/stores/roomStore';
+import { useChatStore } from '@/stores/chatStore';
 import { VscCircleFilled } from 'react-icons/vsc';
 
 const LANG_LABEL: Record<string, string> = {
@@ -19,6 +20,7 @@ export default function StatusBar() {
   const { isFocusMode } = useFocusStore();
   const { activeFileId, cursorPosition } = useEditorStore();
   const { files } = useFileTreeStore();
+  const isConnected = useChatStore((s) => s.isConnected);
 
   function getLanguageLabel(): string {
     if (!activeFileId) return 'text';
@@ -42,8 +44,13 @@ export default function StatusBar() {
       <div className="flex items-center gap-3">
         {/* WS Connection Status */}
         <div className="flex items-center gap-1">
-          <VscCircleFilled size={10} className="text-accent-green" />
-          <span className="text-[11px] text-white">WS Connected</span>
+          <VscCircleFilled
+            size={10}
+            className={isConnected ? 'text-accent-green' : 'text-accent-red'}
+          />
+          <span className="text-[11px] text-white">
+            {isConnected ? 'WS Connected' : 'WS Disconnected'}
+          </span>
         </div>
 
         {/* Role */}

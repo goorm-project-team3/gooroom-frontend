@@ -14,16 +14,12 @@ export default function RoomListPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
   const { setRoom } = useRoomStore();
+  const myNickname = useRoomStore((s) => s.myNickname);
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
     queryKey: ['rooms'],
     queryFn: () => api.get<Room[]>('/api/rooms').then((res) => res.data),
-  });
-
-  const { data: me } = useQuery({
-    queryKey: ['me'],
-    queryFn: () => api.get<{ id: string; name: string }>('/auth/me').then((res) => res.data),
   });
 
   const handleEnterRoom = (room: Room) => {
@@ -44,12 +40,12 @@ export default function RoomListPage() {
           Goo<span className="text-accent-orange">Room</span>
         </span>
         <div className="ml-auto flex items-center gap-2">
-          {me && (
+          {myNickname && (
             <div className="flex items-center gap-2 bg-bg-card border border-border rounded-full px-3 py-1">
               <div className="w-6 h-6 rounded-full bg-accent-blue flex items-center justify-center text-[11px] font-bold text-white">
-                {me.name[0]}
+                {myNickname[0]}
               </div>
-              <span className="text-[13px] text-text-primary">{me.name}</span>
+              <span className="text-[13px] text-text-primary">{myNickname}</span>
             </div>
           )}
         </div>
@@ -86,7 +82,7 @@ export default function RoomListPage() {
           className="grid gap-4"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
         >
-          {data && data.length > 0 ? (
+          {Array.isArray(data) && data.length > 0 ? (
             data.map((room) => (
               <RoomCard key={room.id} room={room} onClick={() => handleEnterRoom(room)} />
             ))
