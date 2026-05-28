@@ -1,6 +1,7 @@
 import ActivityBar from '@/components/room/layout/ActivityBar';
 import RoomTopBar from '@/components/room/layout/RoomTopBar';
 import { useRoomStore } from '@/stores/roomStore';
+import { useFileTreeStore } from '@/stores/fileTreeStore';
 import { useEffect, useState } from 'react';
 import { SidebarType } from '@/types/room';
 import Sidebar from '@/components/room/layout/Sidebar';
@@ -15,15 +16,20 @@ export default function RoomPage() {
   const [activeSidebar, setActiveSidebar] = useState<SidebarType | null>('explorer');
   const { roomId } = useParams<{ roomId: string }>();
   const setRoom = useRoomStore((s) => s.setRoom);
+  const setFilesFromServer = useFileTreeStore((s) => s.setFilesFromServer);
 
   const handleSidebarChange = (type: SidebarType) => {
     setActiveSidebar((prev) => (prev === type ? null : type));
   };
 
   useEffect(() => {
-    api.get(`/api/rooms/${roomId}`).then((res) => {
-      setRoom(String(res.data.data.id), res.data.data.userRole, res.data.data.name);
-    });
+    Promise.all([api.get(`/api/rooms/${roomId}`), api.get(`/api/rooms/${roomId}/files`)]).then(
+      ([roomRes, filesRes]) => {
+        const { id, userRole, name } = roomRes.data.data;
+        setRoom(String(id), userRole, name);
+        setFilesFromServer(filesRes.data.data);
+      },
+    );
 
     useRoomStore.setState({
       roomId: roomId ?? null,
@@ -36,7 +42,7 @@ export default function RoomPage() {
         { id: 'user-6', name: '임학생', role: 'USER' },
       ],
     });
-  }, [roomId, setRoom]);
+  }, [roomId, setRoom, setFilesFromServer]);
 
   return (
     <div className="h-screen flex flex-col bg-bg-base overflow-hidden">
