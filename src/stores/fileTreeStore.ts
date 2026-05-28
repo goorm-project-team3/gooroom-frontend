@@ -24,6 +24,7 @@ interface FileTreeStore {
   getDescendantFileIds: (nodeId: string) => string[];
   moveNode: (nodeId: string, newParentId: string | null) => void;
   updateFileContent: (fileId: string, content: string) => void;
+  addServerFile: (parentId: string | null, node: FileNode) => void;
 }
 
 function generateId() {
@@ -130,5 +131,9 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
       language: file.language ?? undefined,
     }));
     set({ files: nodes });
+  },
+
+  addServerFile: (parentId, node) => {
+    set((state) => ({ files: addNodeToTree(state.files, parentId, node) }));
   },
 }));
