@@ -46,6 +46,18 @@ function shouldSkipPath(relativePath: string): boolean {
     .some((part) => ['node_modules', '.git', 'dist', 'build', '.next', 'out'].includes(part));
 }
 
+function getDefaultContent(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+  const defaults: Record<string, string> = {
+    java: `public class ${fileName.replace('.java', '')} {\n\n}`,
+    py: '# new file',
+    js: '// new file',
+    ts: '// new file',
+    tsx: 'export default function Component() {\n  return <div></div>;\n}',
+  };
+  return defaults[ext] ?? '// new file';
+}
+
 // --- InlineInput ---
 function InlineInput({
   depth,
@@ -169,14 +181,14 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
                     const res = await api.post(`/api/rooms/${roomId}/files`, {
                       name,
                       language: null,
-                      content: '',
+                      content: getDefaultContent(name),
                     });
                     addServerFile(node.id, {
                       id: String(res.data.id),
                       name: res.data.name,
                       type: 'file',
                       language: res.data.language ?? undefined,
-                      content: '',
+                      content: getDefaultContent(res.data.name),
                     });
                   } catch (e) {
                     console.error('생성 실패', e);
@@ -523,14 +535,14 @@ export default function FileTree() {
                             const res = await api.post(`/api/rooms/${roomId}/files`, {
                               name,
                               language: null,
-                              content: '',
+                              content: getDefaultContent(name),
                             });
                             addServerFile(null, {
                               id: String(res.data.id),
                               name: res.data.name,
                               type: 'file',
                               language: res.data.language ?? undefined,
-                              content: '',
+                              content: getDefaultContent(res.data.name),
                             });
                           } catch (e) {
                             console.error('생성 실패', e);

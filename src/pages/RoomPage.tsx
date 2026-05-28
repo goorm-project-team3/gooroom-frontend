@@ -27,7 +27,7 @@ export default function RoomPage() {
       ([roomRes, filesRes]) => {
         const { id, userRole, name } = roomRes.data.data;
         setRoom(String(id), userRole, name);
-        setFilesFromServer(filesRes.data.data);
+        setFilesFromServer(filesRes.data);
       },
     );
 
