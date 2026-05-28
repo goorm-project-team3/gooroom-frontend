@@ -122,4 +122,29 @@ export const handlers = [
       { status: 200 },
     );
   }),
+  http.get('/api/rooms/:roomId/files', () => {
+    return HttpResponse.json(
+      [
+        {
+          id: 1,
+          name: 'Main.java',
+          language: 'java',
+          content: null,
+          createdBy: { id: 1, nickname: '김강사' },
+          createdAt: '2026-05-28T00:00:00',
+          updatedAt: '2026-05-28T00:00:00',
+        },
+        {
+          id: 2,
+          name: 'Solution.java',
+          language: 'java',
+          content: null,
+          createdBy: { id: 1, nickname: '김강사' },
+          createdAt: '2026-05-28T00:00:00',
+          updatedAt: '2026-05-28T00:00:00',
+        },
+      ],
+      { status: 200 },
+    );
+  }),
 ];
