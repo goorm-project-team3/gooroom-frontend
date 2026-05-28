@@ -379,6 +379,7 @@ export default function FileTree() {
             className={`flex flex-col h-full ${isRootDragOver ? 'bg-bg-hover/20' : ''}`}
             onContextMenu={(e) => {
               e.preventDefault();
+              if (!isOwner) return;
               setCtxMenu({
                 open: true,
                 x: e.clientX,
@@ -514,6 +515,7 @@ export default function FileTree() {
                 onNewFolder={handleCtxNewFolder}
                 onDelete={handleCtxDelete}
                 onClose={() => setCtxMenu(null)}
+                isOwner={isOwner}
               />
             )}
           </div>
@@ -531,6 +533,7 @@ interface ContextMenuProps {
   onNewFolder: () => void;
   onDelete: () => void;
   onClose: () => void;
+  isOwner: boolean;
 }
 
 function ContextMenu({
@@ -541,6 +544,7 @@ function ContextMenu({
   onNewFolder,
   onDelete,
   onClose,
+  isOwner,
 }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -578,7 +582,7 @@ function ContextMenu({
       className="bg-bg-panel border border-border rounded shadow-lg py-1 min-w-[150px]"
       onContextMenu={(e) => e.preventDefault()}
     >
-      {(targetType === 'folder' || targetType === 'root') && (
+      {isOwner && (targetType === 'folder' || targetType === 'root') && (
         <>
           <button className={itemCls} onClick={onNewFile}>
             <VscNewFile size={14} /> New File
@@ -588,7 +592,7 @@ function ContextMenu({
           </button>
         </>
       )}
-      {targetType !== 'root' && (
+      {isOwner && targetType !== 'root' && (
         <>
           {targetType === 'folder' && <div className="mx-2 my-1 border-t border-border" />}
           <button className={`${itemCls} !text-red-400 hover:!text-red-300`} onClick={onDelete}>
