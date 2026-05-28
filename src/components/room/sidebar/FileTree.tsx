@@ -222,7 +222,7 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const handleClick = async () => {
     setActiveFile(node.id);
 
-    if (node.content === undefined) return;
+    if (node.content !== undefined) return;
 
     try {
       const res = await api.get(`/api/rooms/${roomId}/files/${node.id}`);
