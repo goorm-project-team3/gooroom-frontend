@@ -176,4 +176,26 @@ export const handlers = [
       { status: 200 },
     );
   }),
+  http.post('/api/rooms/:roomId/files', async ({ request }) => {
+    const body = (await request.json()) as {
+      name: string;
+      language: string | null;
+      content: string;
+    };
+    return HttpResponse.json(
+      {
+        id: Date.now(), // 임시 ID
+        name: body.name,
+        language: body.language,
+        content: body.content,
+        createdBy: { id: 1, nickname: '김강사' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      { status: 201 },
+    );
+  }),
+  http.delete('/api/rooms/:roomId/files/:fileId', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
 ];
