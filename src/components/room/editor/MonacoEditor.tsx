@@ -6,6 +6,7 @@ import * as MonacoType from 'monaco-editor';
 import { useRoomStore } from '@/stores/roomStore';
 import { useEffect, useRef } from 'react';
 import { useFileEditSocket } from '@/hooks/useFileEditSocket';
+import { useAwarenessSocket } from '@/hooks/useAwarenessSocket';
 import { api } from '@/api/instance';
 
 const LANG_MAP: Record<string, string> = {
@@ -48,6 +49,7 @@ export default function MonacoEditor() {
     editorRef,
     versionRef,
   );
+  const { publishAwareness } = useAwarenessSocket(activeFileId, editorRef);
 
   if (!activeFileId) {
     return (
@@ -71,6 +73,7 @@ export default function MonacoEditor() {
   const ext = node?.name.split('.').pop() ?? '';
   const language = LANG_MAP[ext] ?? node?.language ?? 'plaintext';
 
+
   return (
     <div className="flex-1 overflow-hidden">
       <Editor
@@ -89,6 +92,24 @@ export default function MonacoEditor() {
 
           editor.onDidChangeCursorPosition((e) => {
             useEditorStore.getState().setCursorPosition(e.position.lineNumber, e.position.column);
+          });
+
+          editor.onDidChangeCursorSelection((e) => {
+            const sel = e.selection;
+            const isEmptySelection =
+              sel.startLineNumber === sel.endLineNumber && sel.startColumn === sel.endColumn;
+
+            publishAwareness(
+              { lineNumber: sel.positionLineNumber, column: sel.positionColumn },
+              isEmptySelection
+                ? null
+                : {
+                    startLineNumber: sel.startLineNumber,
+                    startColumn: sel.startColumn,
+                    endLineNumber: sel.endLineNumber,
+                    endColumn: sel.endColumn,
+                  },
+            );
           });
 
           if (role === 'OWNER') {
