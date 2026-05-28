@@ -31,6 +31,9 @@ interface RoomStore {
     counts: { understand: number; confused: number },
     closedAt: number | null,
   ) => void;
+
+  myNickname: string | null;
+  setMyNickname: (nickname: string) => void;
 }
 
 export const useRoomStore = create<RoomStore>()(
@@ -65,6 +68,8 @@ export const useRoomStore = create<RoomStore>()(
       reactionClosedAt: null,
       myUserId: null,
       setMyUserId: (id) => set({ myUserId: id }),
+      myNickname: null,
+      setMyNickname: (nickname) => set({ myNickname: nickname }),
       syncUnderstandingReaction: (isOpen, counts, closedAt) =>
         set((state) => ({
           isReactionOpen: isOpen,
@@ -77,10 +82,11 @@ export const useRoomStore = create<RoomStore>()(
       name: 'gooroom-user', // localStorage 키 이름
       partialize: (state) => ({
         myUserId: state.myUserId,
+        myNickname: state.myNickname,
         roomId: state.roomId,
         role: state.role,
         roomName: state.roomName,
-      }), // myUserId만 저장
+      }),
     },
   ),
 );

@@ -6,6 +6,7 @@ import { useRoomStore } from '@/stores/roomStore';
 export default function LoginPage() {
   const navigate = useNavigate();
   const setMyUserId = useRoomStore((s) => s.setMyUserId);
+  const setMyNickname = useRoomStore((s) => s.setMyNickname);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,8 +16,9 @@ export default function LoginPage() {
     setError('');
     try {
       const res = await api.post('/api/auth/login', { email, password });
-      const userId = res.data.data.userId;
+      const { userId, nickname } = res.data.data;
       setMyUserId(userId);
+      setMyNickname(nickname);
       navigate('/');
     } catch {
       setError('이메일 또는 비밀번호가 올바르지 않습니다.');
