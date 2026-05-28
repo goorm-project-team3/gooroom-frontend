@@ -54,7 +54,6 @@ export function useAwarenessSocket(
     };
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const editor = editorRef.current;
 
@@ -62,9 +61,9 @@ export function useAwarenessSocket(
       decorationMap.current.forEach((collection) => collection.clear());
       decorationMap.current.clear();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileId]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const client = clientRef.current;
     if (!isConnected || !client || !fileId || !roomId) return;
@@ -120,6 +119,7 @@ export function useAwarenessSocket(
     return () => {
       sub.unsubscribe();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, fileId, roomId, myUserId]);
 
   const publishAwareness = useCallback(

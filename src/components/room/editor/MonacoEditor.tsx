@@ -73,7 +73,6 @@ export default function MonacoEditor() {
   const ext = node?.name.split('.').pop() ?? '';
   const language = LANG_MAP[ext] ?? node?.language ?? 'plaintext';
 
-
   return (
     <div className="flex-1 overflow-hidden">
       <Editor
