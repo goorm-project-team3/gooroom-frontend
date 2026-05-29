@@ -4,6 +4,23 @@ import { useRoomStore } from '@/stores/roomStore';
 import { fetchChatHistory } from '@/api/chat';
 import ChatMessageItem from './ChatMessageItem';
 
+const getDateLabel = (dateStr: string) => {
+  const normalized = /Z|[+-]\d{2}:\d{2}$/.test(dateStr) ? dateStr : `${dateStr}Z`;
+
+  const msgDate = new Date(normalized).toDateString();
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+
+  if (msgDate === today) return '오늘';
+  if (msgDate === yesterday) return '어제';
+
+  return new Date(normalized).toLocaleDateString('ko-KR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
 /**
  * 채팅 메시지 목록을 렌더링하는 컴포넌트
  * 새 메시지 수신 시 자동 스크롤
@@ -65,14 +82,36 @@ export default function ChatMessages() {
 
   return (
     <div ref={scrollContainerRef} className="flex-1 overflow-y-auto flex flex-col gap-2 p-3">
-      {messages.map((msg) => (
-        <ChatMessageItem
-          key={msg.messageId}
-          message={msg}
-          isMyMessage={msg.userId === myUserId}
-          isOwnerMessage={msg.role === 'OWNER'}
-        />
-      ))}
+      {messages.map((msg, i) => {
+        const toDay = (str: string) => {
+          const s = /Z|[+-]\d{2}:\d{2}$/.test(str) ? str : `${str}Z`;
+          return new Date(s).toDateString();
+        };
+
+        const prevMsg = messages[i - 1];
+        const msgDay = toDay(msg.createdAt);
+        const prevDay = prevMsg ? toDay(prevMsg.createdAt) : null;
+        const showDateSeparator = msgDay !== prevDay;
+        return (
+          <>
+            {showDateSeparator && (
+              <div key={`sep-${msgDay}`} className="flex items-center gap-2 my-2">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[11px] text-text-dim shrink-0">
+                  {getDateLabel(msg.createdAt)}
+                </span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+            )}
+            <ChatMessageItem
+              key={msg.messageId}
+              message={msg}
+              isMyMessage={msg.userId === myUserId}
+              isOwnerMessage={msg.role === 'OWNER'}
+            />
+          </>
+        );
+      })}
     </div>
   );
 }
