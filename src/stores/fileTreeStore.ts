@@ -42,7 +42,7 @@ function generateId() {
  * @param nodes 순회할 노드 배열
  * @param fileId content를 업데이트할 파일의 ID
  * @param content 업데이트할 내용
- * @returns 
+ * @returns
  */
 function updateContentInTree(nodes: FileNode[], fileId: string, content: string): FileNode[] {
   return nodes.map((node) => {
@@ -85,9 +85,9 @@ function addNodeToTree(nodes: FileNode[], parentId: string | null, newNode: File
 
 /**
  * 트리에서 특정 노드를 제거한 트리를 반환하는 함수
-  * @param nodes 현재 트리 노드 배열
-  * @param nodeId 제거할 노드의 ID
-  * @returns 노드가 제거된 트리 노드 배열
+ * @param nodes 현재 트리 노드 배열
+ * @param nodeId 제거할 노드의 ID
+ * @returns 노드가 제거된 트리 노드 배열
  */
 function removeNodeFromTree(nodes: FileNode[], nodeId: string): FileNode[] {
   return nodes
