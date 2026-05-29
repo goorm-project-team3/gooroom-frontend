@@ -122,4 +122,80 @@ export const handlers = [
       { status: 200 },
     );
   }),
+  http.get('/api/rooms/:roomId/files', () => {
+    return HttpResponse.json(
+      [
+        {
+          id: 1,
+          name: 'Main.java',
+          language: 'java',
+          content: null,
+          createdBy: { id: 1, nickname: '김강사' },
+          createdAt: '2026-05-28T00:00:00',
+          updatedAt: '2026-05-28T00:00:00',
+        },
+        {
+          id: 2,
+          name: 'Solution.java',
+          language: 'java',
+          content: null,
+          createdBy: { id: 1, nickname: '김강사' },
+          createdAt: '2026-05-28T00:00:00',
+          updatedAt: '2026-05-28T00:00:00',
+        },
+      ],
+      { status: 200 },
+    );
+  }),
+  http.get('/api/rooms/:roomId/files/:fileId', ({ params }) => {
+    const fileId = Number(params.fileId);
+
+    const mockContents: Record<number, string> = {
+      1: `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, GooRoom!");
+    }
+}`,
+      2: `public class Solution {
+    public int solve(int n) {
+        return n * 2;
+    }
+}`,
+    };
+
+    return HttpResponse.json(
+      {
+        id: fileId,
+        name: fileId === 1 ? 'Main.java' : 'Solution.java',
+        language: 'java',
+        content: mockContents[fileId] ?? '',
+        createdBy: { id: 1, nickname: '김강사' },
+        createdAt: '2026-05-28T00:00:00',
+        updatedAt: '2026-05-28T00:00:00',
+      },
+      { status: 200 },
+    );
+  }),
+  http.post('/api/rooms/:roomId/files', async ({ request }) => {
+    const body = (await request.json()) as {
+      name: string;
+      language: string | null;
+      content: string;
+    };
+    return HttpResponse.json(
+      {
+        id: Date.now(), // 임시 ID
+        name: body.name,
+        language: body.language,
+        content: body.content,
+        createdBy: { id: 1, nickname: '김강사' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+      { status: 201 },
+    );
+  }),
+  http.delete('/api/rooms/:roomId/files/:fileId', () => {
+    return new HttpResponse(null, { status: 204 });
+  }),
 ];

@@ -1,8 +1,15 @@
 import { useEditorStore } from '@/stores/editorStore';
-import { useFileTreeStore, type FileNode } from '@/stores/fileTreeStore';
+import {
+  useFileTreeStore,
+  getNodePath,
+  findNode,
+  findParentId,
+  type FileNode,
+} from '@/stores/fileTreeStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Collapsible, Text } from '@vapor-ui/core';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { api } from '@/api/instance';
 import {
   VscChevronDown,
   VscChevronRight,
@@ -39,10 +46,62 @@ const PendingAddCtx = createContext<PendingAddCtxValue>({
 
 type AddingType = 'file' | 'folder' | null;
 
+/**
+ * 폴더 import 시 제외할 경로인지 확인
+ * @param relativePath webkitRealtivePath 형태의 경로
+ */
 function shouldSkipPath(relativePath: string): boolean {
   return relativePath
     .split('/')
     .some((part) => ['node_modules', '.git', 'dist', 'build', '.next', 'out'].includes(part));
+}
+
+/**
+ * 바이너리 파일인지 확인
+ * @param fileName 파일 이름
+ * @returns 확인 결과, true면 바이너리 파일, false면 텍스트 파일
+ */
+function isBinaryFile(fileName: string): boolean {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+  return [
+    'png',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
+    'ico',
+    'svg',
+    'bmp',
+    'pdf',
+    'zip',
+    'tar',
+    'gz',
+    'woff',
+    'woff2',
+    'ttf',
+    'eot',
+    'mp4',
+    'mp3',
+    'mov',
+    'wav',
+  ].includes(ext);
+}
+
+/**
+ * 파일 확장자별 기본 내용 반환
+ * @param fileName 파일 이름
+ * @returns 파일 확장자에 따른 기본 내용, 알 수 없는 확장자는 "// new file" 반환
+ */
+function getDefaultContent(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+  const defaults: Record<string, string> = {
+    java: `public class ${fileName.replace('.java', '')} {\n\n}`,
+    py: '# new file',
+    js: '// new file',
+    ts: '// new file',
+    tsx: 'export default function Component() {\n  return <div></div>;\n}',
+  };
+  return defaults[ext] ?? '// new file';
 }
 
 // --- InlineInput ---
@@ -80,11 +139,15 @@ function InlineInput({
 }
 
 // --- Folder Node ---
+/**
+ * 폴더 노드 컴포넌트
+ * 폴더 노드의 드래그 앤 드롭, 컨텍스트 메뉴, 인라인 추가 기능을 담당
+ */
 function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const [localOpen, setLocalOpen] = useState(true);
   const [localAdding, setLocalAdding] = useState<AddingType>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const { addNode, moveNode } = useFileTreeStore();
+  const { addNode, moveNode, addFileFromServer } = useFileTreeStore();
   const { draggingId, setDraggingId } = useContext(DragContext);
   const { openCtxMenu } = useContext(CtxmenuContext);
   const { pendingAdd, clearPendingAdd } = useContext(PendingAddCtx);
@@ -95,14 +158,47 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const open = isTargeted ? true : localOpen;
   const adding: AddingType = isTargeted ? pendingAdd!.type : localAdding;
 
+  const roomId = useRoomStore((s) => s.roomId);
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    if (draggingId && draggingId !== node.id) {
-      moveNode(draggingId, node.id);
-      setDraggingId(null);
-      setLocalOpen(true);
+
+    if (!draggingId || draggingId === node.id) return;
+
+    const currentFiles = useFileTreeStore.getState().files;
+    const draggedNode = findNode(currentFiles, draggingId);
+    const originalParentId = findParentId(currentFiles, draggingId);
+
+    moveNode(draggingId, node.id);
+    setDraggingId(null);
+    setLocalOpen(true);
+
+    if (draggedNode?.type === 'file') {
+      const newFolderPath = getNodePath(node.id, useFileTreeStore.getState().files);
+      const newFullPath = newFolderPath ? `${newFolderPath}/${draggedNode.name}` : draggedNode.name;
+      api.put(`/api/rooms/${roomId}/files/${draggingId}`, { name: newFullPath }).catch(() => {
+        if (originalParentId !== undefined) {
+          useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+        }
+      });
+    } else if (draggedNode?.type === 'folder') {
+      const updatedFiles = useFileTreeStore.getState().files;
+      const descendantIds = useFileTreeStore.getState().getDescendantFileIds(draggingId);
+
+      if (descendantIds.length > 0) {
+        Promise.all(
+          descendantIds.map((fileId) => {
+            const newPath = getNodePath(fileId, updatedFiles);
+            return api.put(`/api/rooms/${roomId}/files/${fileId}`, { name: newPath });
+          }),
+        ).catch(() => {
+          if (originalParentId !== undefined) {
+            useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+          }
+        });
+      }
     }
   };
 
@@ -158,8 +254,30 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
                   <VscFolder size={14} className="text-[#e8ab70]" />
                 )
               }
-              onConfirm={(name) => {
-                addNode(node.id, name, adding);
+              onConfirm={async (name) => {
+                if (adding === 'folder') {
+                  addNode(node.id, name, 'folder');
+                } else {
+                  try {
+                    const folderPath = getNodePath(node.id, useFileTreeStore.getState().files);
+                    const fullPath = folderPath ? `${folderPath}/${name}` : name;
+                    const res = await api.post(`/api/rooms/${roomId}/files`, {
+                      name: fullPath,
+                      language: null,
+                      content: getDefaultContent(name),
+                    });
+                    addFileFromServer({
+                      id: res.data.id,
+                      name: res.data.name,
+                      language: res.data.language,
+                    });
+                    useFileTreeStore
+                      .getState()
+                      .updateFileContent(String(res.data.id), getDefaultContent(name));
+                  } catch (e) {
+                    console.error('생성 실패', e);
+                  }
+                }
                 setLocalAdding(null);
                 if (isTargeted) clearPendingAdd();
               }}
@@ -176,11 +294,32 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
 }
 
 // --- File Node ---
+/**
+ * 파일 노드 컴포넌트
+ * 파일 노드의 클릭 시 활성화, 드래그 앤 드롭, 컨텍스트 메뉴 기능을 담당
+ */
 function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const { activeFileId, setActiveFile } = useEditorStore();
   const { draggingId, setDraggingId } = useContext(DragContext);
   const { openCtxMenu } = useContext(CtxmenuContext);
   const isActive = activeFileId === node.id;
+
+  const roomId = useRoomStore((s) => s.roomId);
+  const { updateFileContent } = useFileTreeStore();
+
+  const handleClick = async () => {
+    setActiveFile(node.id);
+
+    if (node.content !== undefined) return;
+
+    try {
+      const res = await api.get(`/api/rooms/${roomId}/files/${node.id}`);
+      updateFileContent(node.id, res.data.content ?? '');
+    } catch (e) {
+      console.error('파일 내용 불러오기 실패', e);
+      updateFileContent(node.id, '');
+    }
+  };
 
   if (node.type === 'folder') return <FolderNodeItem node={node} depth={depth} />;
 
@@ -200,7 +339,7 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
           : 'text-text-secondary hover:bg-bg-input hover:text-text-primary'
       } ${draggingId === node.id ? 'opacity-50' : ''}`}
       style={{ paddingLeft: depth * 12 + 8 + 18 }}
-      onClick={() => setActiveFile(node.id)}
+      onClick={handleClick}
     >
       <VscFile size={14} />
       <Text typography="body3" className="ml-1 text-text-secondary">
@@ -211,6 +350,10 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
 }
 
 // --- Main ---
+/**
+ * 파일트리 루트 컴포넌트
+ * 파일 트리의 전체 구조와 상태를 관리하며, 폴더 및 파일 노드 컴포넌트를 포함
+ */
 export default function FileTree() {
   const { files, addNode, moveNode, removeNode, getDescendantFileIds } = useFileTreeStore();
   const { closeFile } = useEditorStore();
@@ -220,6 +363,10 @@ export default function FileTree() {
   const [hovered, setHovered] = useState(false);
   const [isRootDragOver, setIsRootDragOver] = useState(false);
   const roomName = useRoomStore((s) => s.roomName);
+
+  const role = useRoomStore((s) => s.role);
+  const roomId = useRoomStore((s) => s.roomId);
+  const isOwner = role === 'OWNER';
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [importTargetId, setImportTargetId] = useState<string | null>(undefined!);
@@ -239,58 +386,70 @@ export default function FileTree() {
     const selectedFiles = Array.from(e.target.files ?? []);
     selectedFiles.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const content = event.target?.result as string;
-        addNode(importTargetId, file.name, 'file', content);
+        const folderPath = importTargetId
+          ? getNodePath(importTargetId, useFileTreeStore.getState().files)
+          : '';
+        const fullPath = folderPath ? `${folderPath}/${file.name}` : file.name;
+
+        try {
+          const res = await api.post(`/api/rooms/${roomId}/files`, {
+            name: fullPath,
+            content,
+            language: null,
+          });
+          useFileTreeStore.getState().addFileFromServer({
+            id: res.data.id,
+            name: res.data.name,
+            language: res.data.language,
+          });
+          useFileTreeStore.getState().updateFileContent(String(res.data.id), content);
+        } catch {
+          addNode(importTargetId, file.name, 'file', content);
+        }
       };
       reader.readAsText(file);
     });
     e.target.value = '';
   };
 
-  const handleFolderInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFolderInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []).filter(
-      (file) => !shouldSkipPath(file.webkitRelativePath),
+      (file) => !shouldSkipPath(file.webkitRelativePath) && !isBinaryFile(file.name),
     );
     if (selectedFiles.length === 0) return;
 
-    const pathToId = new Map<string, string>();
-
-    const dirPaths = new Set<string>();
-
     for (const file of selectedFiles) {
-      const parts = file.webkitRelativePath.split('/');
-      for (let i = 1; i < parts.length; i++) {
-        dirPaths.add(parts.slice(0, i).join('/'));
-      }
-    }
-
-    const sortedDirPaths = Array.from(dirPaths).sort(
-      (a, b) => a.split('/').length - b.split('/').length,
-    );
-
-    for (const dirPath of sortedDirPaths) {
-      const parts = dirPath.split('/');
-      const name = parts[parts.length - 1];
-      const parentPath = parts.slice(0, -1).join('/');
-      const parentId = parentPath ? (pathToId.get(parentPath) ?? null) : null;
-      const newId = addNode(parentId, name, 'folder');
-      pathToId.set(dirPath, newId);
-    }
-
-    for (const file of selectedFiles) {
-      const parts = file.webkitRelativePath.split('/');
-      const parentPath = parts.slice(0, -1).join('/');
-      const parentId = pathToId.get(parentPath) ?? null;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        addNode(parentId, file.name, 'file', event.target?.result as string);
-      };
-      reader.onerror = () => {
-        addNode(parentId, file.name, 'file', '');
-      };
-      reader.readAsText(file);
+      await new Promise<void>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const content = event.target?.result as string;
+          if (!content) {
+            resolve();
+            return;
+          }
+          try {
+            const res = await api.post(`/api/rooms/${roomId}/files`, {
+              name: file.webkitRelativePath,
+              content,
+              language: null,
+            });
+            useFileTreeStore.getState().addFileFromServer({
+              id: res.data.id,
+              name: res.data.name,
+              language: res.data.language,
+            });
+            useFileTreeStore.getState().updateFileContent(String(res.data.id), content);
+          } catch {
+            addNode(null, file.name, 'file', content);
+          }
+          resolve();
+        };
+        reader.onerror = () => resolve();
+        reader.readAsText(file);
+      });
+      await new Promise((r) => setTimeout(r, 100)); // 100ms 간격으로 업로드
     }
 
     e.target.value = '';
@@ -337,14 +496,30 @@ export default function FileTree() {
     setCtxMenu(null);
   };
 
-  const handleCtxDelete = () => {
+  const handleCtxDelete = async () => {
     if (!ctxMenu?.targetId) return;
-    if (ctxMenu.targetType === 'file') {
-      closeFile(ctxMenu.targetId);
+
+    if (ctxMenu.targetType === 'folder') {
+      const descendantIds = getDescendantFileIds(ctxMenu.targetId);
+      try {
+        await Promise.all(
+          descendantIds.map((fileId) => api.delete(`/api/rooms/${roomId}/files/${fileId}`)),
+        );
+        descendantIds.forEach(closeFile);
+        removeNode(ctxMenu.targetId);
+      } catch (e) {
+        console.error('파일 삭제 실패', e);
+      }
     } else {
-      getDescendantFileIds(ctxMenu.targetId).forEach(closeFile);
+      try {
+        await api.delete(`/api/rooms/${roomId}/files/${ctxMenu.targetId}`);
+        closeFile(ctxMenu.targetId);
+        removeNode(ctxMenu.targetId);
+      } catch (e) {
+        console.error('파일 삭제 실패', e);
+      }
     }
-    removeNode(ctxMenu.targetId);
+
     setCtxMenu(null);
   };
 
@@ -356,6 +531,7 @@ export default function FileTree() {
             className={`flex flex-col h-full ${isRootDragOver ? 'bg-bg-hover/20' : ''}`}
             onContextMenu={(e) => {
               e.preventDefault();
+              if (!isOwner) return;
               setCtxMenu({
                 open: true,
                 x: e.clientX,
@@ -373,11 +549,44 @@ export default function FileTree() {
             }}
             onDrop={(e) => {
               e.preventDefault();
-              if (draggingId) {
-                moveNode(draggingId, null);
-                setDraggingId(null);
+              if (!draggingId) {
+                setIsRootDragOver(false);
+                return;
               }
+
+              const currentFiles = useFileTreeStore.getState().files;
+              const draggedNode = findNode(useFileTreeStore.getState().files, draggingId);
+              const originalParentId = findParentId(currentFiles, draggingId);
+
+              moveNode(draggingId, null);
+              setDraggingId(null);
               setIsRootDragOver(false);
+
+              if (draggedNode?.type === 'file') {
+                api
+                  .put(`/api/rooms/${roomId}/files/${draggingId}`, { name: draggedNode.name })
+                  .catch(() => {
+                    if (originalParentId !== undefined) {
+                      useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+                    }
+                  });
+              } else if (draggedNode?.type === 'folder') {
+                const updatedFiles = useFileTreeStore.getState().files;
+                const descendantIds = useFileTreeStore.getState().getDescendantFileIds(draggingId);
+
+                if (descendantIds.length > 0) {
+                  Promise.all(
+                    descendantIds.map((fileId) => {
+                      const newPath = getNodePath(fileId, updatedFiles);
+                      return api.put(`/api/rooms/${roomId}/files/${fileId}`, { name: newPath });
+                    }),
+                  ).catch(() => {
+                    if (originalParentId !== undefined) {
+                      useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+                    }
+                  });
+                }
+              }
             }}
           >
             <input
@@ -409,48 +618,50 @@ export default function FileTree() {
                     {roomName ?? '강의룸'}
                   </Text>
                 </Collapsible.Trigger>
-                <div
-                  className={`flex gap-0.5 pr-2 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}
-                >
-                  <button
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => handleImportClick(null)}
-                    className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                    title="File Import"
+                {isOwner && (
+                  <div
+                    className={`flex gap-0.5 pr-2 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}
                   >
-                    <VscCloudUpload size={14} />
-                  </button>
-                  <button
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => folderInputRef.current?.click()}
-                    className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                    title="Folder Import"
-                  >
-                    <VscFileSubmodule size={14} />
-                  </button>
-                  <button
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setAdding('file');
-                      setOpen(true);
-                    }}
-                    className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                    title="New File"
-                  >
-                    <VscNewFile size={14} />
-                  </button>
-                  <button
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      setAdding('folder');
-                      setOpen(true);
-                    }}
-                    className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                    title="New Folder"
-                  >
-                    <VscNewFolder size={14} />
-                  </button>
-                </div>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => handleImportClick(null)}
+                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                      title="File Import"
+                    >
+                      <VscCloudUpload size={14} />
+                    </button>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => folderInputRef.current?.click()}
+                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                      title="Folder Import"
+                    >
+                      <VscFileSubmodule size={14} />
+                    </button>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setAdding('file');
+                        setOpen(true);
+                      }}
+                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                      title="New File"
+                    >
+                      <VscNewFile size={14} />
+                    </button>
+                    <button
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        setAdding('folder');
+                        setOpen(true);
+                      }}
+                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                      title="New Folder"
+                    >
+                      <VscNewFolder size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <Collapsible.Panel>
@@ -468,8 +679,28 @@ export default function FileTree() {
                           <VscFolder size={14} className="text-[#e8ab70]" />
                         )
                       }
-                      onConfirm={(name) => {
-                        addNode(null, name, adding);
+                      onConfirm={async (name) => {
+                        if (adding === 'folder') {
+                          addNode(null, name, 'folder');
+                        } else {
+                          try {
+                            const res = await api.post(`/api/rooms/${roomId}/files`, {
+                              name,
+                              language: null,
+                              content: getDefaultContent(name),
+                            });
+                            useFileTreeStore.getState().addFileFromServer({
+                              id: res.data.id,
+                              name: res.data.name,
+                              language: res.data.language,
+                            });
+                            useFileTreeStore
+                              .getState()
+                              .updateFileContent(String(res.data.id), getDefaultContent(name));
+                          } catch (e) {
+                            console.error('생성 실패', e);
+                          }
+                        }
                         setAdding(null);
                       }}
                       onCancel={() => setAdding(null)}
@@ -489,6 +720,7 @@ export default function FileTree() {
                 onNewFolder={handleCtxNewFolder}
                 onDelete={handleCtxDelete}
                 onClose={() => setCtxMenu(null)}
+                isOwner={isOwner}
               />
             )}
           </div>
@@ -506,6 +738,7 @@ interface ContextMenuProps {
   onNewFolder: () => void;
   onDelete: () => void;
   onClose: () => void;
+  isOwner: boolean;
 }
 
 function ContextMenu({
@@ -516,6 +749,7 @@ function ContextMenu({
   onNewFolder,
   onDelete,
   onClose,
+  isOwner,
 }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -553,7 +787,7 @@ function ContextMenu({
       className="bg-bg-panel border border-border rounded shadow-lg py-1 min-w-[150px]"
       onContextMenu={(e) => e.preventDefault()}
     >
-      {(targetType === 'folder' || targetType === 'root') && (
+      {isOwner && (targetType === 'folder' || targetType === 'root') && (
         <>
           <button className={itemCls} onClick={onNewFile}>
             <VscNewFile size={14} /> New File
@@ -563,7 +797,7 @@ function ContextMenu({
           </button>
         </>
       )}
-      {targetType !== 'root' && (
+      {isOwner && targetType !== 'root' && (
         <>
           {targetType === 'folder' && <div className="mx-2 my-1 border-t border-border" />}
           <button className={`${itemCls} !text-red-400 hover:!text-red-300`} onClick={onDelete}>
