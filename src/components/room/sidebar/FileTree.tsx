@@ -46,6 +46,32 @@ function shouldSkipPath(relativePath: string): boolean {
     .some((part) => ['node_modules', '.git', 'dist', 'build', '.next', 'out'].includes(part));
 }
 
+function isBinaryFile(fileName: string): boolean {
+  const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
+  return [
+    'png',
+    'jpg',
+    'jpeg',
+    'gif',
+    'webp',
+    'ico',
+    'svg',
+    'bmp',
+    'pdf',
+    'zip',
+    'tar',
+    'gz',
+    'woff',
+    'woff2',
+    'ttf',
+    'eot',
+    'mp4',
+    'mp3',
+    'mov',
+    'wav',
+  ].includes(ext);
+}
+
 function getDefaultContent(fileName: string): string {
   const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
   const defaults: Record<string, string> = {
@@ -309,58 +335,70 @@ export default function FileTree() {
     const selectedFiles = Array.from(e.target.files ?? []);
     selectedFiles.forEach((file) => {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = async (event) => {
         const content = event.target?.result as string;
-        addNode(importTargetId, file.name, 'file', content);
+        const folderPath = importTargetId
+          ? getNodePath(importTargetId, useFileTreeStore.getState().files)
+          : '';
+        const fullPath = folderPath ? `${folderPath}/${file.name}` : file.name;
+
+        try {
+          const res = await api.post(`/api/rooms/${roomId}/files`, {
+            name: fullPath,
+            content,
+            language: null,
+          });
+          useFileTreeStore.getState().addFileFromServer({
+            id: res.data.id,
+            name: res.data.name,
+            language: res.data.language,
+          });
+          useFileTreeStore.getState().updateFileContent(String(res.data.id), content);
+        } catch {
+          addNode(importTargetId, file.name, 'file', content);
+        }
       };
       reader.readAsText(file);
     });
     e.target.value = '';
   };
 
-  const handleFolderInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFolderInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []).filter(
-      (file) => !shouldSkipPath(file.webkitRelativePath),
+      (file) => !shouldSkipPath(file.webkitRelativePath) && !isBinaryFile(file.name),
     );
     if (selectedFiles.length === 0) return;
 
-    const pathToId = new Map<string, string>();
-
-    const dirPaths = new Set<string>();
-
     for (const file of selectedFiles) {
-      const parts = file.webkitRelativePath.split('/');
-      for (let i = 1; i < parts.length; i++) {
-        dirPaths.add(parts.slice(0, i).join('/'));
-      }
-    }
-
-    const sortedDirPaths = Array.from(dirPaths).sort(
-      (a, b) => a.split('/').length - b.split('/').length,
-    );
-
-    for (const dirPath of sortedDirPaths) {
-      const parts = dirPath.split('/');
-      const name = parts[parts.length - 1];
-      const parentPath = parts.slice(0, -1).join('/');
-      const parentId = parentPath ? (pathToId.get(parentPath) ?? null) : null;
-      const newId = addNode(parentId, name, 'folder');
-      pathToId.set(dirPath, newId);
-    }
-
-    for (const file of selectedFiles) {
-      const parts = file.webkitRelativePath.split('/');
-      const parentPath = parts.slice(0, -1).join('/');
-      const parentId = pathToId.get(parentPath) ?? null;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        addNode(parentId, file.name, 'file', event.target?.result as string);
-      };
-      reader.onerror = () => {
-        addNode(parentId, file.name, 'file', '');
-      };
-      reader.readAsText(file);
+      await new Promise<void>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const content = event.target?.result as string;
+          if (!content) {
+            resolve();
+            return;
+          }
+          try {
+            const res = await api.post(`/api/rooms/${roomId}/files`, {
+              name: file.webkitRelativePath,
+              content,
+              language: null,
+            });
+            useFileTreeStore.getState().addFileFromServer({
+              id: res.data.id,
+              name: res.data.name,
+              language: res.data.language,
+            });
+            useFileTreeStore.getState().updateFileContent(String(res.data.id), content);
+          } catch {
+            addNode(null, file.name, 'file', content);
+          }
+          resolve();
+        };
+        reader.onerror = () => resolve();
+        reader.readAsText(file);
+      });
+      await new Promise((r) => setTimeout(r, 100)); // 100ms 간격으로 업로드
     }
 
     e.target.value = '';
