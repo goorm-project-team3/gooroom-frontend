@@ -1,5 +1,5 @@
 import { useEditorStore } from '@/stores/editorStore';
-import { useFileTreeStore, type FileNode } from '@/stores/fileTreeStore';
+import { useFileTreeStore, getNodePath, findNode, type FileNode } from '@/stores/fileTreeStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Collapsible, Text } from '@vapor-ui/core';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
@@ -97,7 +97,7 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const [localOpen, setLocalOpen] = useState(true);
   const [localAdding, setLocalAdding] = useState<AddingType>(null);
   const [isDragOver, setIsDragOver] = useState(false);
-  const { addNode, moveNode, addServerFile } = useFileTreeStore();
+  const { addNode, moveNode, addFileFromServer } = useFileTreeStore();
   const { draggingId, setDraggingId } = useContext(DragContext);
   const { openCtxMenu } = useContext(CtxmenuContext);
   const { pendingAdd, clearPendingAdd } = useContext(PendingAddCtx);
@@ -114,10 +114,22 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    if (draggingId && draggingId !== node.id) {
-      moveNode(draggingId, node.id);
-      setDraggingId(null);
-      setLocalOpen(true);
+
+    if (!draggingId || draggingId === node.id) return;
+
+    const currentFiles = useFileTreeStore.getState().files;
+    const draggedNode = findNode(currentFiles, draggingId);
+
+    moveNode(draggingId, node.id);
+    setDraggingId(null);
+    setLocalOpen(true);
+
+    if (draggedNode?.type === 'file') {
+      const newFolderPath = getNodePath(node.id, useFileTreeStore.getState().files);
+      const newFullPath = newFolderPath ? `${newFolderPath}/${draggedNode.name}` : draggedNode.name;
+      api
+        .put(`/api/rooms/${roomId}/files/${draggingId}`, { name: newFullPath })
+        .catch((e) => console.error('파일 이동 실패', e));
     }
   };
 
@@ -178,18 +190,21 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
                   addNode(node.id, name, 'folder');
                 } else {
                   try {
+                    const folderPath = getNodePath(node.id, useFileTreeStore.getState().files);
+                    const fullPath = folderPath ? `${folderPath}/${name}` : name;
                     const res = await api.post(`/api/rooms/${roomId}/files`, {
-                      name,
+                      name: fullPath,
                       language: null,
                       content: getDefaultContent(name),
                     });
-                    addServerFile(node.id, {
-                      id: String(res.data.id),
+                    addFileFromServer({
+                      id: res.data.id,
                       name: res.data.name,
-                      type: 'file',
-                      language: res.data.language ?? undefined,
-                      content: getDefaultContent(res.data.name),
+                      language: res.data.language,
                     });
+                    useFileTreeStore
+                      .getState()
+                      .updateFileContent(String(res.data.id), getDefaultContent(name));
                   } catch (e) {
                     console.error('생성 실패', e);
                   }
@@ -263,8 +278,7 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
 
 // --- Main ---
 export default function FileTree() {
-  const { files, addNode, moveNode, removeNode, getDescendantFileIds, addServerFile } =
-    useFileTreeStore();
+  const { files, addNode, moveNode, removeNode, getDescendantFileIds } = useFileTreeStore();
   const { closeFile } = useEditorStore();
   const [adding, setAdding] = useState<AddingType>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
@@ -446,11 +460,21 @@ export default function FileTree() {
             }}
             onDrop={(e) => {
               e.preventDefault();
-              if (draggingId) {
-                moveNode(draggingId, null);
-                setDraggingId(null);
+              if (!draggingId) {
+                setIsRootDragOver(false);
+                return;
               }
+
+              const draggedNode = findNode(useFileTreeStore.getState().files, draggingId);
+              moveNode(draggingId, null);
+              setDraggingId(null);
               setIsRootDragOver(false);
+
+              if (draggedNode?.type === 'file') {
+                api
+                  .put(`/api/rooms/${roomId}/files/${draggingId}`, { name: draggedNode.name })
+                  .catch((e) => console.error('파일 이동 실패', e));
+              }
             }}
           >
             <input
@@ -553,13 +577,14 @@ export default function FileTree() {
                               language: null,
                               content: getDefaultContent(name),
                             });
-                            addServerFile(null, {
-                              id: String(res.data.id),
+                            useFileTreeStore.getState().addFileFromServer({
+                              id: res.data.id,
                               name: res.data.name,
-                              type: 'file',
-                              language: res.data.language ?? undefined,
-                              content: getDefaultContent(res.data.name),
+                              language: res.data.language,
                             });
+                            useFileTreeStore
+                              .getState()
+                              .updateFileContent(String(res.data.id), getDefaultContent(name));
                           } catch (e) {
                             console.error('생성 실패', e);
                           }

@@ -24,7 +24,7 @@ interface FileTreeStore {
   getDescendantFileIds: (nodeId: string) => string[];
   moveNode: (nodeId: string, newParentId: string | null) => void;
   updateFileContent: (fileId: string, content: string) => void;
-  addServerFile: (parentId: string | null, node: FileNode) => void;
+  addFileFromServer: (serverFile: { id: number; name: string; language: string | null }) => void;
 }
 
 function generateId() {
@@ -67,7 +67,7 @@ function removeNodeFromTree(nodes: FileNode[], nodeId: string): FileNode[] {
     );
 }
 
-function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
+export function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
   for (const node of nodes) {
     if (node.id === nodeId) return node;
     if (node.children) {
@@ -76,6 +76,18 @@ function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
     }
   }
   return null;
+}
+
+export function getNodePath(nodeId: string, nodes: FileNode[], prefix = ''): string {
+  for (const node of nodes) {
+    const current = prefix ? `${prefix}/${node.name}` : node.name;
+    if (node.id === nodeId) return current;
+    if (node.children) {
+      const found = getNodePath(nodeId, node.children, current);
+      if (found) return found;
+    }
+  }
+  return '';
 }
 
 function isDescendant(nodes: FileNode[], nodeId: string, poentialAncestorId: string): boolean {
@@ -124,16 +136,63 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
   },
 
   setFilesFromServer: (serverFiles) => {
-    const nodes: FileNode[] = serverFiles.map((file) => ({
-      id: String(file.id),
-      name: file.name,
-      type: 'file' as const,
-      language: file.language ?? undefined,
-    }));
-    set({ files: nodes });
+    const root: FileNode[] = [];
+
+    for (const file of serverFiles) {
+      const parts = file.name.split('/');
+      const fileName = parts.pop()!;
+      let current = root;
+      let pathSoFar = '';
+
+      for (const part of parts) {
+        pathSoFar = pathSoFar ? `${pathSoFar}/${part}` : part;
+        let folder = current.find((n) => n.name === part && n.type === 'folder');
+        if (!folder) {
+          folder = { id: `folder-${pathSoFar}`, name: part, type: 'folder', children: [] };
+          current.push(folder);
+        }
+        current = folder.children!;
+      }
+
+      current.push({
+        id: String(file.id),
+        name: fileName,
+        type: 'file',
+        language: file.language ?? undefined,
+      });
+    }
+
+    set({ files: root });
   },
 
-  addServerFile: (parentId, node) => {
-    set((state) => ({ files: addNodeToTree(state.files, parentId, node) }));
+  addFileFromServer: (serverFile) => {
+    set((state) => {
+      if (findNode(state.files, String(serverFile.id))) return state;
+
+      const root = JSON.parse(JSON.stringify(state.files)) as FileNode[];
+      const parts = serverFile.name.split('/');
+      const fileName = parts.pop()!;
+      let current = root;
+      let pathSoFar = '';
+
+      for (const part of parts) {
+        pathSoFar = pathSoFar ? `${pathSoFar}/${part}` : part;
+        let folder = current.find((n) => n.name === part && n.type === 'folder');
+        if (!folder) {
+          folder = { id: `folder-${pathSoFar}`, name: part, type: 'folder', children: [] };
+          current.push(folder);
+        }
+        current = folder.children!;
+      }
+
+      current.push({
+        id: String(serverFile.id),
+        name: fileName,
+        type: 'file',
+        language: serverFile.language ?? undefined,
+      });
+
+      return { files: root };
+    });
   },
 }));
