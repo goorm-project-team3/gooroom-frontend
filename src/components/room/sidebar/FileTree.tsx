@@ -165,6 +165,22 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
           useFileTreeStore.getState().moveNode(draggingId, originalParentId);
         }
       });
+    } else if (draggedNode?.type === 'folder') {
+      const updatedFiles = useFileTreeStore.getState().files;
+      const descendantIds = useFileTreeStore.getState().getDescendantFileIds(draggingId);
+
+      if (descendantIds.length > 0) {
+        Promise.all(
+          descendantIds.map((fileId) => {
+            const newPath = getNodePath(fileId, updatedFiles);
+            return api.put(`/api/rooms/${roomId}/files/${fileId}`, { name: newPath });
+          }),
+        ).catch(() => {
+          if (originalParentId !== undefined) {
+            useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+          }
+        });
+      }
     }
   };
 
@@ -528,6 +544,22 @@ export default function FileTree() {
                       useFileTreeStore.getState().moveNode(draggingId, originalParentId);
                     }
                   });
+              } else if (draggedNode?.type === 'folder') {
+                const updatedFiles = useFileTreeStore.getState().files;
+                const descendantIds = useFileTreeStore.getState().getDescendantFileIds(draggingId);
+
+                if (descendantIds.length > 0) {
+                  Promise.all(
+                    descendantIds.map((fileId) => {
+                      const newPath = getNodePath(fileId, updatedFiles);
+                      return api.put(`/api/rooms/${roomId}/files/${fileId}`, { name: newPath });
+                    }),
+                  ).catch(() => {
+                    if (originalParentId !== undefined) {
+                      useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+                    }
+                  });
+                }
               }
             }}
           >
