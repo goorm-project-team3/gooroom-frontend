@@ -46,12 +46,21 @@ const PendingAddCtx = createContext<PendingAddCtxValue>({
 
 type AddingType = 'file' | 'folder' | null;
 
+/**
+ * 폴더 import 시 제외할 경로인지 확인
+ * @param relativePath webkitRealtivePath 형태의 경로
+ */
 function shouldSkipPath(relativePath: string): boolean {
   return relativePath
     .split('/')
     .some((part) => ['node_modules', '.git', 'dist', 'build', '.next', 'out'].includes(part));
 }
 
+/**
+ * 바이너리 파일인지 확인
+ * @param fileName 파일 이름
+ * @returns 확인 결과, true면 바이너리 파일, false면 텍스트 파일
+ */
 function isBinaryFile(fileName: string): boolean {
   const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
   return [
@@ -78,6 +87,11 @@ function isBinaryFile(fileName: string): boolean {
   ].includes(ext);
 }
 
+/**
+ * 파일 확장자별 기본 내용 반환
+ * @param fileName 파일 이름
+ * @returns 파일 확장자에 따른 기본 내용, 알 수 없는 확장자는 "// new file" 반환
+ */
 function getDefaultContent(fileName: string): string {
   const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
   const defaults: Record<string, string> = {
@@ -125,6 +139,10 @@ function InlineInput({
 }
 
 // --- Folder Node ---
+/**
+ * 폴더 노드 컴포넌트
+ * 폴더 노드의 드래그 앤 드롭, 컨텍스트 메뉴, 인라인 추가 기능을 담당
+ */
 function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const [localOpen, setLocalOpen] = useState(true);
   const [localAdding, setLocalAdding] = useState<AddingType>(null);
@@ -276,6 +294,10 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
 }
 
 // --- File Node ---
+/**
+ * 파일 노드 컴포넌트
+ * 파일 노드의 클릭 시 활성화, 드래그 앤 드롭, 컨텍스트 메뉴 기능을 담당
+ */
 function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
   const { activeFileId, setActiveFile } = useEditorStore();
   const { draggingId, setDraggingId } = useContext(DragContext);
@@ -328,6 +350,10 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
 }
 
 // --- Main ---
+/**
+ * 파일트리 루트 컴포넌트
+ * 파일 트리의 전체 구조와 상태를 관리하며, 폴더 및 파일 노드 컴포넌트를 포함
+ */
 export default function FileTree() {
   const { files, addNode, moveNode, removeNode, getDescendantFileIds } = useFileTreeStore();
   const { closeFile } = useEditorStore();

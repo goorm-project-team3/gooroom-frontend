@@ -1,5 +1,8 @@
 import { create } from 'zustand';
 
+/**
+ * 단일 노드 인터페이스
+ */
 export interface FileNode {
   id: string;
   name: string;
@@ -27,10 +30,20 @@ interface FileTreeStore {
   addFileFromServer: (serverFile: { id: number; name: string; language: string | null }) => void;
 }
 
+/**
+ * 로컬 전용 노드 고유 ID 생성 함수
+ */
 function generateId() {
   return `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 }
 
+/**
+ * 트리를 순회하며 특정 파일 ID를 찾아 내용을 업데이트하는 함수
+ * @param nodes 순회할 노드 배열
+ * @param fileId content를 업데이트할 파일의 ID
+ * @param content 업데이트할 내용
+ * @returns 
+ */
 function updateContentInTree(nodes: FileNode[], fileId: string, content: string): FileNode[] {
   return nodes.map((node) => {
     if (node.id === fileId) return { ...node, content };
@@ -41,11 +54,22 @@ function updateContentInTree(nodes: FileNode[], fileId: string, content: string)
   });
 }
 
+/**
+ * 노드와 그 하위 노드들에서 파일 ID를 수집하는 함수
+ * @param node 수집을 시작할 노드
+ */
 function collectFileIds(node: FileNode): string[] {
   if (node.type === 'file') return [node.id];
   return node.children?.flatMap(collectFileIds) ?? [];
 }
 
+/**
+ * 트리에서 특정 노드 하위에 새 노드를 추가한 트리를 반환하는 함수
+ * @param nodes 현재 트리 노드 배열
+ * @param parentId 새 노드를 추가할 부모 노드의 ID (null이면 루트에 추가)
+ * @param newNode 추가할 새 노드
+ * @returns 새 노드가 추가된 트리 노드 배열
+ */
 function addNodeToTree(nodes: FileNode[], parentId: string | null, newNode: FileNode): FileNode[] {
   if (parentId === null) return [...nodes, newNode];
   return nodes.map((node) => {
@@ -59,6 +83,12 @@ function addNodeToTree(nodes: FileNode[], parentId: string | null, newNode: File
   });
 }
 
+/**
+ * 트리에서 특정 노드를 제거한 트리를 반환하는 함수
+  * @param nodes 현재 트리 노드 배열
+  * @param nodeId 제거할 노드의 ID
+  * @returns 노드가 제거된 트리 노드 배열
+ */
 function removeNodeFromTree(nodes: FileNode[], nodeId: string): FileNode[] {
   return nodes
     .filter((node) => node.id !== nodeId)
@@ -67,6 +97,12 @@ function removeNodeFromTree(nodes: FileNode[], nodeId: string): FileNode[] {
     );
 }
 
+/**
+ * 트리에서 특정 노드를 찾는 함수
+ * @param nodes 탐색할 노드 배열
+ * @param nodeId 찾을 노드의 ID
+ * @returns 찾은 노드 또는 null
+ */
 export function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
   for (const node of nodes) {
     if (node.id === nodeId) return node;
@@ -78,6 +114,12 @@ export function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
   return null;
 }
 
+/**
+ * 특정 노드의 부모 ID를 찾는 함수
+ * @param nodes 탐색할 노드 배열
+ * @param targetId 부모를 찾을 노드의 ID
+ * @return 부모 노드의 ID, 루트 노드인 경우 null, 찾지 못한 경우 undefined
+ */
 export function findParentId(
   nodes: FileNode[],
   targetId: string,
@@ -93,6 +135,13 @@ export function findParentId(
   return undefined;
 }
 
+/**
+ * 노드의 전체 경로를 반환하는 함수
+ * @param nodeId 경로를 찾을 노드의 ID
+ * @param nodes 탐색할 노드 배열
+ * @param prefix 현재까지의 경로 접두사 (재귀적으로 사용)
+ * @returns 노드의 전체 경로 (예: "src/components/Button.tsx") 또는 빈 문자열 (노드를 찾지 못한 경우)
+ */
 export function getNodePath(nodeId: string, nodes: FileNode[], prefix = ''): string {
   for (const node of nodes) {
     const current = prefix ? `${prefix}/${node.name}` : node.name;
@@ -105,8 +154,15 @@ export function getNodePath(nodeId: string, nodes: FileNode[], prefix = ''): str
   return '';
 }
 
-function isDescendant(nodes: FileNode[], nodeId: string, poentialAncestorId: string): boolean {
-  const ancestor = findNode(nodes, poentialAncestorId);
+/**
+ * 노드가 특정 조상 노드의 하위에 있는지 확인하는 함수
+ * @param nodes 현재 트리 노드 배열
+ * @param nodeId 이동할 노드의 ID
+ * @param potentialAncestorId 확인할 조상 노드의 ID
+ * @returns nodeId가 potentialAncestorId의 하위에 있으면 true, 그렇지 않으면 false
+ */
+function isDescendant(nodes: FileNode[], nodeId: string, potentialAncestorId: string): boolean {
+  const ancestor = findNode(nodes, potentialAncestorId);
   if (!ancestor || ancestor.type !== 'folder') return false;
   return !!findNode(ancestor.children ?? [], nodeId);
 }
@@ -150,6 +206,10 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
     set((state) => ({ files: updateContentInTree(state.files, fileId, content) }));
   },
 
+  /**
+   * 서버에서 받은 파일 목록으로 트리를 재구성하는 함수
+   * @param serverFiles 서버에서 받은 파일 목록
+   */
   setFilesFromServer: (serverFiles) => {
     const root: FileNode[] = [];
 
@@ -180,6 +240,10 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
     set({ files: root });
   },
 
+  /**
+   * 서버에서 받은 파일을 트리에 추가하는 함수
+   * @param serverFile 서버에서 받은 파일 정보
+   */
   addFileFromServer: (serverFile) => {
     set((state) => {
       if (findNode(state.files, String(serverFile.id))) return state;
