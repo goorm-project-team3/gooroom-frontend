@@ -1,5 +1,11 @@
 import { useEditorStore } from '@/stores/editorStore';
-import { useFileTreeStore, getNodePath, findNode, type FileNode } from '@/stores/fileTreeStore';
+import {
+  useFileTreeStore,
+  getNodePath,
+  findNode,
+  findParentId,
+  type FileNode,
+} from '@/stores/fileTreeStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { Collapsible, Text } from '@vapor-ui/core';
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
@@ -145,6 +151,7 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
 
     const currentFiles = useFileTreeStore.getState().files;
     const draggedNode = findNode(currentFiles, draggingId);
+    const originalParentId = findParentId(currentFiles, draggingId);
 
     moveNode(draggingId, node.id);
     setDraggingId(null);
@@ -153,9 +160,11 @@ function FolderNodeItem({ node, depth }: { node: FileNode; depth: number }) {
     if (draggedNode?.type === 'file') {
       const newFolderPath = getNodePath(node.id, useFileTreeStore.getState().files);
       const newFullPath = newFolderPath ? `${newFolderPath}/${draggedNode.name}` : draggedNode.name;
-      api
-        .put(`/api/rooms/${roomId}/files/${draggingId}`, { name: newFullPath })
-        .catch((e) => console.error('파일 이동 실패', e));
+      api.put(`/api/rooms/${roomId}/files/${draggingId}`, { name: newFullPath }).catch(() => {
+        if (originalParentId !== undefined) {
+          useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+        }
+      });
     }
   };
 
@@ -503,7 +512,10 @@ export default function FileTree() {
                 return;
               }
 
+              const currentFiles = useFileTreeStore.getState().files;
               const draggedNode = findNode(useFileTreeStore.getState().files, draggingId);
+              const originalParentId = findParentId(currentFiles, draggingId);
+
               moveNode(draggingId, null);
               setDraggingId(null);
               setIsRootDragOver(false);
@@ -511,7 +523,11 @@ export default function FileTree() {
               if (draggedNode?.type === 'file') {
                 api
                   .put(`/api/rooms/${roomId}/files/${draggingId}`, { name: draggedNode.name })
-                  .catch((e) => console.error('파일 이동 실패', e));
+                  .catch(() => {
+                    if (originalParentId !== undefined) {
+                      useFileTreeStore.getState().moveNode(draggingId, originalParentId);
+                    }
+                  });
               }
             }}
           >

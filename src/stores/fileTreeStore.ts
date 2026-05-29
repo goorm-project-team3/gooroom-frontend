@@ -78,6 +78,21 @@ export function findNode(nodes: FileNode[], nodeId: string): FileNode | null {
   return null;
 }
 
+export function findParentId(
+  nodes: FileNode[],
+  targetId: string,
+  parentId: string | null = null,
+): string | null | undefined {
+  for (const node of nodes) {
+    if (node.id === targetId) return parentId;
+    if (node.children) {
+      const found = findParentId(node.children, targetId, node.id);
+      if (found !== undefined) return found;
+    }
+  }
+  return undefined;
+}
+
 export function getNodePath(nodeId: string, nodes: FileNode[], prefix = ''): string {
   for (const node of nodes) {
     const current = prefix ? `${prefix}/${node.name}` : node.name;
