@@ -122,12 +122,6 @@ export function useFileEditSocket(
           resyncTimerRef.current = null;
         }
         if (broadcast.version > versionRef.current) {
-          console.log(
-            '[EDIT] 내 broadcast 수신 version:',
-            broadcast.version,
-            '현재 versionRef:',
-            versionRef.current,
-          );
           versionRef.current = broadcast.version;
         }
         return;
@@ -199,12 +193,6 @@ export function useFileEditSocket(
       });
 
       versionRef.current += 1;
-      console.log(
-        '[EDIT] 발행 version:',
-        versionRef.current - 1,
-        '→ 다음 예상:',
-        versionRef.current,
-      );
 
       // ack 대기 타이머 - 2초 내 본인 broadcast 없으면 re-sync
       if (resyncTimerRef.current) clearTimeout(resyncTimerRef.current);
