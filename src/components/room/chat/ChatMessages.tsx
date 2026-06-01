@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, Fragment } from 'react';
 import { useChatStore } from '@/stores/chatStore';
 import { useRoomStore } from '@/stores/roomStore';
 import { fetchChatHistory } from '@/api/chat';
@@ -93,7 +93,7 @@ export default function ChatMessages() {
         const prevDay = prevMsg ? toDay(prevMsg.createdAt) : null;
         const showDateSeparator = msgDay !== prevDay;
         return (
-          <>
+          <Fragment key={msg.messageId}>
             {showDateSeparator && (
               <div key={`sep-${msgDay}`} className="flex items-center gap-2 my-2">
                 <div className="flex-1 h-px bg-border" />
@@ -109,7 +109,7 @@ export default function ChatMessages() {
               isMyMessage={msg.userId === myUserId}
               isOwnerMessage={msg.role === 'OWNER'}
             />
-          </>
+          </Fragment>
         );
       })}
     </div>

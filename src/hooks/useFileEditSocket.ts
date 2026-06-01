@@ -45,14 +45,23 @@ export function useFileEditSocket(
 
   const pendingSyncContentRef = useRef<string | null>(null);
   const isSyncingRef = useRef(false);
+  const isSyncedRef = useRef(false);
+  const resyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** STOMP client 생성 및 연결 */
   useEffect(() => {
     const client = new Client({
       brokerURL: import.meta.env.VITE_WS_URL,
       reconnectDelay: 3000,
-      onConnect: () => setIsConnected(true),
-      onDisconnect: () => setIsConnected(false),
+      heartbeatIncoming: 4000,
+      onConnect: () => {
+        console.log('[WS] 연결됨');
+        setIsConnected(true);
+      },
+      onDisconnect: () => {
+        console.log('[WS] 끊김');
+        setIsConnected(false);
+      },
       onStompError: (frame) => {
         console.error('[STOMP ERROR]', frame);
         console.error('message:', frame.headers['message']);
@@ -69,6 +78,7 @@ export function useFileEditSocket(
 
   useEffect(() => {
     pendingSyncContentRef.current = null;
+    isSyncingRef.current = false;
   }, [fileId]);
 
   /** 파일 선택 시 sync 요청 + sync/edit 구독 */
@@ -82,6 +92,8 @@ export function useFileEditSocket(
       const broadcast: FileSyncBroadcast = JSON.parse(msg.body);
       updateFileContent(fileId, broadcast.content);
       versionRef.current = broadcast.version;
+      console.log('[SYNC] 수신 version:', broadcast.version);
+      isSyncedRef.current = true;
 
       if (editorRef.current) {
         isSyncingRef.current = true;
@@ -104,7 +116,18 @@ export function useFileEditSocket(
 
       /** 발행자가 본인이면 건너뜀 */
       if (broadcast.editorId === myUserId) {
+        // ack 확인 → 타이머 취소
+        if (resyncTimerRef.current) {
+          clearTimeout(resyncTimerRef.current);
+          resyncTimerRef.current = null;
+        }
         if (broadcast.version > versionRef.current) {
+          console.log(
+            '[EDIT] 내 broadcast 수신 version:',
+            broadcast.version,
+            '현재 versionRef:',
+            versionRef.current,
+          );
           versionRef.current = broadcast.version;
         }
         return;
@@ -112,6 +135,13 @@ export function useFileEditSocket(
 
       /** 버전 불일치 시 전체 재동기화 요청 */
       if (broadcast.version !== versionRef.current + 1) {
+        console.warn(
+          '[EDIT] 버전 불일치 - broadcast:',
+          broadcast.version,
+          '기대값:',
+          versionRef.current + 1,
+          '→ re-sync 요청',
+        );
         client.publish({
           destination: `/app/room/${roomId}/file/${fileId}/sync`,
           body: JSON.stringify({ type: 'FULL' }),
@@ -143,7 +173,21 @@ export function useFileEditSocket(
   /** OWNER의 편집 발행 */
   const publishEdit = useCallback(
     (changes: FileEditChange[]) => {
-      if (!clientRef.current?.connected || !fileId || !roomId || role !== 'OWNER') return;
+      if (!clientRef.current?.connected || !fileId || !roomId || role !== 'OWNER') {
+        console.warn(
+          '[EDIT] 차단 - connected:',
+          clientRef.current?.connected,
+          'fileId:',
+          fileId,
+          'role:',
+          role,
+        );
+        return;
+      }
+      if (!isSyncedRef.current) {
+        console.warn('[EDIT] 차단 - sync 미완료');
+        return;
+      }
 
       clientRef.current.publish({
         destination: `/app/room/${roomId}/file/${fileId}/edit`,
@@ -155,10 +199,35 @@ export function useFileEditSocket(
       });
 
       versionRef.current += 1;
+      console.log(
+        '[EDIT] 발행 version:',
+        versionRef.current - 1,
+        '→ 다음 예상:',
+        versionRef.current,
+      );
+
+      // ack 대기 타이머 - 2초 내 본인 broadcast 없으면 re-sync
+      if (resyncTimerRef.current) clearTimeout(resyncTimerRef.current);
+      resyncTimerRef.current = setTimeout(() => {
+        resyncTimerRef.current = null;
+        if (clientRef.current?.connected && fileId && roomId) {
+          console.warn('[EDIT] ack 없음 → 자동 re-sync');
+          clientRef.current.publish({
+            destination: `/app/room/${roomId}/file/${fileId}/sync`,
+            body: JSON.stringify({ type: 'FULL' }),
+          });
+        }
+      }, 1000);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [fileId, roomId, role],
   );
+
+  useEffect(() => {
+    return () => {
+      if (resyncTimerRef.current) clearTimeout(resyncTimerRef.current);
+    };
+  }, []);
 
   return { publishEdit, pendingSyncContentRef, isSyncingRef };
 }
