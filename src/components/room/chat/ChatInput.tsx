@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { IconButton } from '@vapor-ui/core';
 import { VscSend } from 'react-icons/vsc';
 import { useChatStore } from '@/stores/chatStore';
@@ -10,6 +10,7 @@ interface ChatInputProps {
 export default function ChatInput({ onSend }: ChatInputProps) {
   const [value, setValue] = useState('');
   const isConnected = useChatStore((s) => s.isConnected);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -22,13 +23,22 @@ export default function ChatInput({ onSend }: ChatInputProps) {
     if (!value.trim() || !isConnected) return;
     onSend(value.trim());
     setValue('');
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
   }
 
   return (
     <div className="flex items-stretch gap-2 p-3 border-t border-border shrink-0">
       <textarea
+        ref={textareaRef}
         value={value}
-        onChange={(e) => setValue(e.target.value)}
+        onChange={(e) => {
+          setValue(e.target.value);
+          e.target.style.height = 'auto';
+          e.target.style.height = `${e.target.scrollHeight}px`;
+        }}
         onKeyDown={handleKeyDown}
         placeholder={isConnected ? '메시지를 입력하세요...' : '연결 중...'}
         disabled={!isConnected}
