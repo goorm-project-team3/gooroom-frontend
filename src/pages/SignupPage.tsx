@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
 export function SignupPage() {
-  // 1. 입력값 상태 관리
+  // 1. 입력값 상태 관리 (기존 틀 유지 + role 추가)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    username: ''
+    username: '',
+    role: 'OWNER' // 강사: OWNER, 학생: USER 기본값 세팅
   });
 
   const [pwError, setPwError] = useState('');
@@ -24,14 +25,17 @@ export function SignupPage() {
   useEffect(() => {
     const { email, password, confirmPassword, username } = formData;
 
-    if (confirmPassword && password !== confirmPassword) {
+    // 비밀번호 가이드라인 실시간 조건 (6자~20자 체크 기능 추가)
+    if (password.length > 0 && (password.length < 6 || password.length > 20)) {
+      setPwError('비밀번호는 6자 이상, 20자 이하로 입력해주세요.');
+    } else if (confirmPassword && password !== confirmPassword) {
       setPwError('비밀번호가 일치하지 않습니다.');
     } else {
       setPwError('');
     }
 
     const isEmailValid = email.includes('@');
-    const isPwValid = password.length >= 8;
+    const isPwValid = password.length >= 6 && password.length <= 20; // 8자에서 6~20자로 변경
     const isPwMatch = password === confirmPassword;
     const isNameValid = username.trim().length > 0;
 
@@ -45,7 +49,8 @@ export function SignupPage() {
     const signupData = {
       email: formData.email,
       password: formData.password,
-      username: formData.username
+      username: formData.username,
+      role: formData.role // 백엔드로 역할 데이터 함께 전송
     };
 
     console.log('백엔드로 전송할 데이터:', signupData);
@@ -88,8 +93,8 @@ export function SignupPage() {
               placeholder="example@email.com"
               required
               style={inputStyle}
-              onFocus={(e) => handleFocus(e)}
-              onBlur={(e) => handleBlur(e)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </div>
 
@@ -101,11 +106,11 @@ export function SignupPage() {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="8자리 이상 입력해주세요"
+              placeholder="6자리 이상 20자리 이하로 입력해주세요"
               required
               style={inputStyle}
-              onFocus={(e) => handleFocus(e)}
-              onBlur={(e) => handleBlur(e)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
           </div>
 
@@ -120,8 +125,8 @@ export function SignupPage() {
               placeholder="비밀번호를 한번 더 입력해주세요"
               required
               style={inputStyle}
-              onFocus={(e) => handleFocus(e)}
-              onBlur={(e) => handleBlur(e)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
             {pwError && <span style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px', fontWeight: '500' }}>{pwError}</span>}
           </div>
@@ -137,9 +142,49 @@ export function SignupPage() {
               placeholder="홍길동"
               required
               style={inputStyle}
-              onFocus={(e) => handleFocus(e)}
-              onBlur={(e) => handleBlur(e)}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
             />
+          </div>
+
+          {/* [추가 항목] 원본 코딩 학원 IDE 콘셉트에 맞춘 역할 선택 라디오 영역 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>역할</label>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '12px', 
+              padding: '14px', 
+              backgroundColor: '#f8fafc', 
+              borderRadius: '10px',
+              border: '1px solid #cbd5e1'
+            }}>
+              {/* 강사 선택 */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                <input
+                  type="radio"
+                  name="role"
+                  value="OWNER"
+                  checked={formData.role === 'OWNER'}
+                  onChange={handleChange}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#334155' }}>강사 (OWNER)</span>
+              </label>
+
+              {/* 학생 선택 */}
+              <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                <input
+                  type="radio"
+                  name="role"
+                  value="USER"
+                  checked={formData.role === 'USER'}
+                  onChange={handleChange}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#334155' }}>학생 (USER)</span>
+              </label>
+            </div>
           </div>
 
           {/* 가입 버튼 */}
