@@ -1,13 +1,17 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 
 export function SignupPage() {
+  const navigate = useNavigate();
+  const { signup } = useAuth();
+
   // 1. 입력값 상태 관리 (role 기본값 USER로 고정)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    username: '',
-    role: 'USER',
+    nickname: '',
   });
 
   // 2. 입력창 값 변경 핸들러
@@ -19,7 +23,7 @@ export function SignupPage() {
   };
 
   // 3. 실시간 유효성 검사
-  const { email, password, confirmPassword, username } = formData;
+  const { email, password, confirmPassword, nickname } = formData;
 
   const pwError = useMemo(() => {
     if (password.length > 0 && (password.length < 6 || password.length > 20)) {
@@ -35,38 +39,19 @@ export function SignupPage() {
     const isEmailValid = email.includes('@');
     const isPwValid = password.length >= 6 && password.length <= 20;
     const isPwMatch = password === confirmPassword;
-    const isNameValid = username.trim().length > 0;
+    const isNameValid = nickname.trim().length > 0;
     return !(isEmailValid && isPwValid && isPwMatch && isNameValid);
-  }, [email, password, confirmPassword, username]);
+  }, [email, password, confirmPassword, nickname]);
 
-  // 4. 가입 버튼 클릭 시 실행 (비동기 fetch 및 /api/auth/signup 연결)
+  // 4. 가입 버튼 클릭 시 실행
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 백엔드로 보낼 데이터에서 '비밀번호 확인' 데이터 제외 처리
-    const { confirmPassword: _, ...backendData } = formData;
-
     try {
-      // 요청하신 /api/auth/signup 주소로 POST 요청을 보냅니다.
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(backendData),
-      });
-
-      if (response.ok) {
-        alert('회원가입 요청 성공!');
-        // 필요시 로그인 페이지 등으로 리다이렉트 처리 가능합니다.
-        // window.location.href = '/login';
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        alert(`회원가입 실패: ${errorData.message || '오류가 발생했습니다.'}`);
-      }
-    } catch (error) {
-      console.error('API 통신 에러:', error);
-      alert('서버와 통신하는 중 오류가 발생했습니다.');
+      await signup({ email, password, nickname });
+      alert('회원가입이 완료되었습니다.');
+      navigate('/login');
+    } catch {
+      alert('회원가입에 실패했습니다.');
     }
   };
 
@@ -186,13 +171,11 @@ export function SignupPage() {
 
           {/* 닉네임 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8' }}>
-              닉네임
-            </label>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8' }}>닉네임</label>
             <input
               type="text"
-              name="username"
-              value={formData.username}
+              name="nickname"
+              value={formData.nickname}
               onChange={handleChange}
               placeholder="닉네임을 입력해주세요"
               required
