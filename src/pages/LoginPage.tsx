@@ -43,24 +43,22 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-bg-base">
       {/* 왼쪽 이미지 혹은 로고 (화면이 줄어도 비율에 맞춰 유지됨) */}
-      <div className="w-full md:w-1/2 bg-slate-50 flex items-center justify-center p-8 md:p-12">
+      <div className="w-full md:w-1/2 bg-bg-panel flex items-center justify-center p-8 md:p-12 border-r border-border">
         <img
           src={logo}
           alt="GooRoom로고"
-          className="w-full max-w-[150px] md:max-w-xs h-auto object-contain transition-all"
+          className="w-full max-w-[150px] md:max-w-xs h-auto object-contain"
         />
       </div>
 
       {/* 오른쪽 로그인 폼 */}
       <div className="flex-1 flex flex-col justify-center p-8 md:p-16">
         <div className="max-w-md w-full mx-auto">
-          <h1 className="text-3xl font-bold mb-8 text-slate-800 tracking-tight">
-            GooRoom에 로그인
-          </h1>
+          <h1 className="text-3xl font-bold mb-8 text-sky-500 tracking-tight">GooRoom에 로그인</h1>
 
-          <form onSubmit={onSubmit} className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-5 text-gray-500">
             <div>
               {/* 원래 컴포넌트 고유의 모양을 유지하도록 className 수정 항목 제거 */}
               <TextField
@@ -95,7 +93,7 @@ export function LoginPage() {
 
             {/* 서버 에러 표시 */}
             {error && (
-              <p className="text-red-500 text-sm pl-1 font-medium">
+              <p className="text-accent-red text-sm mb-4 font-medium">
                 {error.message || '로그인에 실패했습니다.'}
               </p>
             )}
@@ -104,7 +102,7 @@ export function LoginPage() {
             <Button
               type="submit"
               disabled={isLoading || !!passwordValidationError}
-              className="w-full py-3 px-4 bg-sky-400 hover:bg-sky-500 disabled:bg-slate-300 text-white font-semibold rounded-xl shadow-md shadow-sky-100 disabled:shadow-none transition-all duration-200 mt-2"
+              className="w-full py-3 px-4 bg-accent-blue hover:brightness-110 disabled:bg-bg-input text-white font-semibold rounded-xl transition-all duration-200 mt-2"
             >
               {isLoading ? '로딩 중...' : '로그인'}
             </Button>
