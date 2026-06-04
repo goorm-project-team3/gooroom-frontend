@@ -1,9 +1,9 @@
 type Props = {
-  label: string
-  type?: string
-} & React.InputHTMLAttributes<HTMLInputElement>
+  label: string;
+  type?: string;
+} & React.InputHTMLAttributes<HTMLInputElement>;
 
-import React from 'react'
+import React from 'react';
 
 // named export
 export function TextField({ label, type = 'text', ...rest }: Props) {
@@ -17,5 +17,5 @@ export function TextField({ label, type = 'text', ...rest }: Props) {
         {...rest}
       />
     </label>
-  )
+  );
 }

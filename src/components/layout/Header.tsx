@@ -1,20 +1,20 @@
 // src/components/layout/Header.tsx
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../hooks/useAuth'
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
 export function Header() {
-  const navigate = useNavigate()
-  const { login, isLoading: isLoggingOut, } = useAuth()
+  const navigate = useNavigate();
+  const { logout, isLoading: isLoggingOut } = useAuth();
 
   const handleLogout = async () => {
     try {
-      await logout()
-      navigate('/login')
+      await logout();
+      navigate('/login');
     } catch {
-      alert('로그아웃에 실패했습니다.')
+      alert('로그아웃에 실패했습니다.');
     }
-  }
+  };
 
   return (
     <header className="p-4 bg-white shadow flex justify-between">
@@ -27,5 +27,5 @@ export function Header() {
         {isLoggingOut ? '...' : '로그아웃'}
       </button>
     </header>
-  )
+  );
 }
