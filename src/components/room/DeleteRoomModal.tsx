@@ -28,12 +28,14 @@ export default function DeleteRoomModal({
         </p>
         <button
           onClick={() => onIsOpenChange(false)}
+          type="button"
           className="px-3 py-1.5 text-xs text-text-dim border border-border rounded hover:bg-bg-hover"
         >
           취소
         </button>
         <button
           onClick={onConfirm}
+          type="button"
           className="px-3 py-1.5 text-xs text-white bg-red-500 rounded hover:bg-red-400"
         >
           삭제
