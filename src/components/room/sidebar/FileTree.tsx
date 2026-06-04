@@ -21,6 +21,7 @@ import {
   VscTrash,
   VscCloudUpload,
   VscFileSubmodule,
+  VscRefresh,
 } from 'react-icons/vsc';
 
 // --- Drag Context ---
@@ -355,13 +356,17 @@ function FileNodeItem({ node, depth }: { node: FileNode; depth: number }) {
  * 파일 트리의 전체 구조와 상태를 관리하며, 폴더 및 파일 노드 컴포넌트를 포함
  */
 export default function FileTree() {
-  const { files, addNode, moveNode, removeNode, getDescendantFileIds } = useFileTreeStore();
+  const { files, addNode, moveNode, removeNode, getDescendantFileIds, setFilesFromServer } =
+    useFileTreeStore();
   const { closeFile } = useEditorStore();
   const [adding, setAdding] = useState<AddingType>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [open, setOpen] = useState(true);
   const [hovered, setHovered] = useState(false);
   const [isRootDragOver, setIsRootDragOver] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isCooldown, setIsCooldown] = useState(false);
+  const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const roomName = useRoomStore((s) => s.roomName);
 
   const role = useRoomStore((s) => s.role);
@@ -376,6 +381,28 @@ export default function FileTree() {
   useEffect(() => {
     folderInputRef.current?.setAttribute('webkitdirectory', '');
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+    };
+  }, []);
+
+  const handleRefresh = async () => {
+    if (isRefreshing || isCooldown || !roomId) return;
+    setIsRefreshing(true);
+    try {
+      const res = await api.get(`/api/rooms/${roomId}/files`);
+      setFilesFromServer(res.data);
+      setIsCooldown(true);
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
+      cooldownTimerRef.current = setTimeout(() => setIsCooldown(false), 3000);
+    } catch (e) {
+      console.error('파일 트리 새로고침 실패', e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleImportClick = (parentId: string | null) => {
     setImportTargetId(parentId);
@@ -618,50 +645,62 @@ export default function FileTree() {
                     {roomName ?? '강의룸'}
                   </Text>
                 </Collapsible.Trigger>
-                {isOwner && (
-                  <div
-                    className={`flex gap-0.5 pr-2 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}
+
+                <div
+                  className={`flex gap-0.5 pr-2 transition-opacity ${hovered ? 'opacity-100' : 'opacity-0'}`}
+                >
+                  {isOwner && (
+                    <>
+                      <button
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => handleImportClick(null)}
+                        className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                        title="File Import"
+                      >
+                        <VscCloudUpload size={14} />
+                      </button>
+                      <button
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => folderInputRef.current?.click()}
+                        className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                        title="Folder Import"
+                      >
+                        <VscFileSubmodule size={14} />
+                      </button>
+                      <button
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setAdding('file');
+                          setOpen(true);
+                        }}
+                        className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                        title="New File"
+                      >
+                        <VscNewFile size={14} />
+                      </button>
+                      <button
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setAdding('folder');
+                          setOpen(true);
+                        }}
+                        className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
+                        title="New Folder"
+                      >
+                        <VscNewFolder size={14} />
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={handleRefresh}
+                    disabled={isRefreshing || isCooldown}
+                    className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary disabled:opacity-50"
+                    title={isCooldown ? 'Please wait' : 'Refresh'}
                   >
-                    <button
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => handleImportClick(null)}
-                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                      title="File Import"
-                    >
-                      <VscCloudUpload size={14} />
-                    </button>
-                    <button
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => folderInputRef.current?.click()}
-                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                      title="Folder Import"
-                    >
-                      <VscFileSubmodule size={14} />
-                    </button>
-                    <button
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setAdding('file');
-                        setOpen(true);
-                      }}
-                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                      title="New File"
-                    >
-                      <VscNewFile size={14} />
-                    </button>
-                    <button
-                      onMouseDown={(e) => e.preventDefault()}
-                      onClick={() => {
-                        setAdding('folder');
-                        setOpen(true);
-                      }}
-                      className="p-0.5 rounded hover:bg-bg-selected text-text-secondary hover:text-text-primary"
-                      title="New Folder"
-                    >
-                      <VscNewFolder size={14} />
-                    </button>
-                  </div>
-                )}
+                    <VscRefresh size={14} className={isRefreshing ? 'animate-spin' : ''} />
+                  </button>
+                </div>
               </div>
 
               <Collapsible.Panel>

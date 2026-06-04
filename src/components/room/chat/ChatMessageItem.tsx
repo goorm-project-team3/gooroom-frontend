@@ -6,15 +6,25 @@ interface ChatMessageItemProps {
   isOwnerMessage?: boolean;
 }
 
+/**
+ * 채팅 메시지 아이템 컴포넌트
+ * - 내 메시지는 오른쪽 정렬, 다른 사람 메시지는 왼쪽 정렬
+ * - OWNER 메시지는 강조 스타일 적용
+ */
 export default function ChatMessageItem({
   message,
   isMyMessage,
   isOwnerMessage,
 }: ChatMessageItemProps) {
-  const timeStr = new Date(message.createdAt).toLocaleTimeString('ko-KR', {
+  /** 시간대 KST 기준으로 변환 */
+  const normalized = /Z|[+-]\d{2}:\d{2}$/.test(message.createdAt)
+    ? message.createdAt
+    : `${message.createdAt}Z`;
+
+  const timeStr = new Date(normalized).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
-    hour12: false,
+    hour12: true,
   });
 
   return (
