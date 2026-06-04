@@ -12,11 +12,16 @@ export default function DeleteRoomModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-room-title"
+      aria-describedby="delete-room-desc"
+    >
       <div className="bg-bg-panel border border-border rounded p-6 flex flex-col gap-4 w-72">
-        <p className="text-text-primary text-sm">정말 해당 강의룸을 삭제하시겠습니까?</p>
-        <p className="text-text-dim text-xs">삭제된 강의룸은 복구할 수 없습니다.</p>
-        <div className="flex justify-end gap-2">
+        <p id="delete-room-title" className="text-text-primary text-sm">정말 해당 강의룸을 삭제하시겠습니까?</p>
+        <p id="delete-room-desc" className="text-text-dim text-xs">삭제된 강의룸은 복구할 수 없습니다.</p>
           <button
             onClick={() => onIsOpenChange(false)}
             className="px-3 py-1.5 text-xs text-text-dim border border-border rounded hover:bg-bg-hover"
