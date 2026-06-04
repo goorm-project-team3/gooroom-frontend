@@ -1,5 +1,6 @@
 import { api } from '@/api/instance';
-import { useQuery } from '@tanstack/react-query';
+import { deleteRoom } from '@/api/room';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Room } from '@/types/room';
 import RoomCard from '@/components/room/RoomCard';
 import { Button, Spinner } from '@vapor-ui/core';
@@ -9,10 +10,14 @@ import { useState } from 'react';
 
 import CreateRoomModal from '@/components/room/CreateRoomModal';
 import JoinRoomModal from '@/components/room/JoinRoomModal';
+import DeleteRoomModal from '@/components/room/DeleteRoomModal';
 
 export default function RoomListPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
   const { setRoom, clearUser } = useRoomStore();
   const myNickname = useRoomStore((s) => s.myNickname);
   const navigate = useNavigate();
@@ -26,6 +31,18 @@ export default function RoomListPage() {
     setRoom(String(room.id), room.userRole, room.name);
     navigate(`/rooms/${room.id}`);
   };
+
+  async function handleDeleteConfirm() {
+    if (deleteRoomId === null) return;
+    try {
+      await deleteRoom(deleteRoomId);
+      setDeleteModalOpen(false);
+      setDeleteRoomId(null);
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    } catch {
+      alert('강의룸 삭제에 실패했습니다. 다시 시도해주세요.');
+    }
+  }
 
   const handleLogout = async () => {
     await api.post('/api/auth/logout');
@@ -93,7 +110,20 @@ export default function RoomListPage() {
         >
           {Array.isArray(data) && data.length > 0 ? (
             data.map((room) => (
-              <RoomCard key={room.id} room={room} onClick={() => handleEnterRoom(room)} />
+              <RoomCard
+                key={room.id}
+                room={room}
+                onClick={() => handleEnterRoom(room)}
+                onDelete={
+                  room.userRole === 'OWNER'
+                    ? (e) => {
+                        e.stopPropagation();
+                        setDeleteRoomId(room.id);
+                        setDeleteModalOpen(true);
+                      }
+                    : undefined
+                }
+              />
             ))
           ) : (
             <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3 text-text-dim text-center">
@@ -106,6 +136,11 @@ export default function RoomListPage() {
 
       <CreateRoomModal isOpen={createModalOpen} onIsOpenChange={setCreateModalOpen} />
       <JoinRoomModal isOpen={joinModalOpen} onIsOpenChange={setJoinModalOpen} />
+      <DeleteRoomModal
+        isOpen={deleteModalOpen}
+        onIsOpenChange={setDeleteModalOpen}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }
