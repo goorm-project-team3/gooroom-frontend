@@ -36,7 +36,7 @@ export function LoginPage() {
 
     try {
       await login({ email, password });
-      navigate('/rooms'); // 로그인 후 보여줄 페이지
+      navigate('/'); // 로그인 후 보여줄 페이지
     } catch (e) {
       console.error(e);
     }

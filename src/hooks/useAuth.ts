@@ -18,7 +18,7 @@ export function useAuth() {
     error,
   } = useMutation<LoginResponse, Error, LoginPayload>({
     mutationFn: (data: LoginPayload) =>
-      axios.post<LoginResponse>('/auth/login', data).then((res) => res.data),
+      axios.post<LoginResponse>('/api/auth/login', data).then((res) => res.data),
     onSuccess: (data) => {
       localStorage.setItem('ACCESS_TOKEN', data.token);
       // 혹은 Zustand / Context 에 로그인 상태 저장
