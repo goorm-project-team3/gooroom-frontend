@@ -1,7 +1,7 @@
 import { useEditorStore } from '@/stores/editorStore';
 import { useFileTreeStore } from '@/stores/fileTreeStore';
 import { useMemo, useState } from 'react';
-import { VscFile, VscSearch } from 'react-icons/vsc';
+import { VscFile, VscSearch, VscChevronRight } from 'react-icons/vsc';
 import type { FileNode } from '@/stores/fileTreeStore';
 
 function flattenFilesWithPaths(nodes: FileNode[], prefix = ''): (FileNode & { path: string })[] {
@@ -14,6 +14,7 @@ function flattenFilesWithPaths(nodes: FileNode[], prefix = ''): (FileNode & { pa
 
 export default function SearchPanel() {
   const [query, setQuery] = useState('');
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const { setActiveFile } = useEditorStore();
   const files = useFileTreeStore((s) => s.files);
 
@@ -34,6 +35,15 @@ export default function SearchPanel() {
       });
   }, [query, files]);
 
+  const toggleCollapse = (fileId: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileId)) next.delete(fileId);
+      else next.add(fileId);
+      return next;
+    });
+  };
+
   return (
     <div className="flex flex-col gap-2 p-2">
       {/* 검색어 입력 */}
@@ -49,28 +59,50 @@ export default function SearchPanel() {
       {query.trim() && (
         <div className="flex flex-col gap-1">
           {results.length > 0 ? (
-            results.map((file) => (
-              <button
-                key={file.id}
-                className="flex flex-col items-start w-full gap-2 px-2 py-[5px] text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors rounded"
-                onClick={() => setActiveFile(file.id)}
-              >
-                <div className="flex items-center gap-2 w-full min-w-0">
-                  <VscFile size={14} className="shrink-0" />
-                  <div className="flex flex-col items-start min-w-0">
-                    <span className="text-[13px] truncate">{file.name}</span>
-                    <span className="text-[11px] text-text-dim truncate">{file.path}</span>
+            results.map((file) => {
+              const isCollapsed = collapsed.has(file.id);
+              return (
+                <div key={file.id} className="flex flex-col">
+                  {/* 파일 헤더 — 클릭 시 토글 */}
+                  <div
+                    className="flex items-center gap-1 px-2 py-[5px] text-text-secondary hover:bg-bg-hover hover:text-text-primary transition-colors rounded
+  cursor-pointer"
+                    onClick={() => toggleCollapse(file.id)}
+                  >
+                    <VscChevronRight
+                      size={12}
+                      className={`shrink-0 transition-transform ${isCollapsed ? '' : 'rotate-90'}`}
+                    />
+                    <VscFile size={14} className="shrink-0" />
+                    <div
+                      className="flex flex-col min-w-0 flex-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveFile(file.id);
+                      }}
+                    >
+                      <span className="text-[13px] truncate">{file.name}</span>
+                      <span className="text-[11px] text-text-dim truncate">{file.path}</span>
+                    </div>
                   </div>
-                </div>
 
-                {file.matches?.map((match) => (
-                  <div key={match.line} className="flex gap-2 pl-5 w-full min-w-0">
-                    <span className="text-[11px] text-text-dim shrink-0">{match.line}:</span>
-                    <span className="text-[11px] text-text-secondary truncate">{match.text}</span>
-                  </div>
-                ))}
-              </button>
-            ))
+                  {/* 매칭 라인 — 펼쳐진 경우만 표시 */}
+                  {!isCollapsed &&
+                    file.matches.map((match) => (
+                      <div
+                        key={match.line}
+                        className="flex gap-2 pl-8 pr-2 py-[2px] hover:bg-bg-hover cursor-pointer rounded"
+                        onClick={() => setActiveFile(file.id)}
+                      >
+                        <span className="text-[11px] text-text-dim shrink-0">{match.line}:</span>
+                        <span className="text-[11px] text-text-secondary truncate">
+                          {match.text}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              );
+            })
           ) : (
             <div className="flex flex-col items-center gap-2 py-8 text-text-dim">
               <VscSearch size={24} />
