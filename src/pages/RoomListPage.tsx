@@ -32,9 +32,17 @@ export default function RoomListPage() {
     navigate(`/rooms/${room.id}`);
   };
 
-  async function handleDeleteConfirm() {
-    if (!deleteRoomId) return;
-    try {
+async function handleDeleteConfirm() {
+  if (deleteRoomId === null) return;
+  try {
+    await deleteRoom(deleteRoomId);
+    setDeleteModalOpen(false);
+    setDeleteRoomId(null);
+    queryClient.invalidateQueries({ queryKey: ['rooms'] });
+  } catch {
+    alert('강의룸 삭제에 실패했습니다. 다시 시도해주세요.');
+  }
+}
       await deleteRoom(deleteRoomId);
       setDeleteModalOpen(false);
       setDeleteRoomId(null);
