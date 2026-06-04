@@ -1,5 +1,6 @@
 import { api } from '@/api/instance';
 import { useRoomStore } from '@/stores/roomStore';
+import { RoomRole } from '@/types/room';
 import { Button, Dialog, TextInput } from '@vapor-ui/core';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,10 +16,10 @@ export default function JoinRoomModal({ isOpen, onIsOpenChange }: JoinRoomModalP
   const navigate = useNavigate();
 
   const handleJoinRoom = async () => {
-    const res = await api.post<{ id: string; userRole: 'USER'; name: string }>(
-      `/rooms/${inviteCode}/join`,
+    const res = await api.post<{ id: string; userRole: string; name: string }>(
+      `/api/rooms/${inviteCode}/join`,
     );
-    setRoom(res.data.id, res.data.userRole);
+    setRoom(String(res.data.id), res.data.userRole as RoomRole, res.data.name);
     onIsOpenChange(false);
     navigate(`/rooms/${res.data.id}`);
   };
@@ -38,7 +39,7 @@ export default function JoinRoomModal({ isOpen, onIsOpenChange }: JoinRoomModalP
 
         <Dialog.Body>
           <TextInput
-            placeholder="초대 코드를 입력하세요"
+            placeholder="강의룸 ID를 입력하세요"
             value={inviteCode}
             onChange={(e) => setInviteCode(e.target.value)}
             className="w-full bg-bg-input border border-border rounded-md text-text-primary text-[13px] px-5 py-5 outline-none focus:border-accent-blue transition-colors"

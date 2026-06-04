@@ -7,12 +7,10 @@ import App from './App';
 const queryClient = new QueryClient();
 
 async function enableMocking() {
-  if (!import.meta.env.DEV) {
+  if (!import.meta.env.DEV || import.meta.env.VITE_MSW_ENABLED === 'false') {
     return;
   }
-
   const { worker } = await import('@/mocks/browser');
-
   await worker.start();
 }
 

@@ -4,9 +4,10 @@ import type { Room } from '@/types/room';
 interface RoomCardProps {
   room: Room;
   onClick: () => void;
+  onDelete?: (e: React.MouseEvent) => void;
 }
 
-export default function RoomCard({ room, onClick }: RoomCardProps) {
+export default function RoomCard({ room, onClick, onDelete }: RoomCardProps) {
   const isOwner = room.userRole === 'OWNER';
 
   return (
@@ -54,6 +55,15 @@ export default function RoomCard({ room, onClick }: RoomCardProps) {
           <span>참여 인원 : </span>
           <span>{room.participantCount}명</span>
         </div>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            className="text-xs text-red-400 hover:text-red-300"
+            type="button"
+          >
+            삭제
+          </button>
+        )}
       </Card.Footer>
     </Card.Root>
   );

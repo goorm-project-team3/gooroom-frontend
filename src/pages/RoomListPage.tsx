@@ -1,5 +1,6 @@
 import { api } from '@/api/instance';
-import { useQuery } from '@tanstack/react-query';
+import { deleteRoom } from '@/api/room';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Room } from '@/types/room';
 import RoomCard from '@/components/room/RoomCard';
 import { Button, Spinner } from '@vapor-ui/core';
@@ -9,11 +10,16 @@ import { useState } from 'react';
 
 import CreateRoomModal from '@/components/room/CreateRoomModal';
 import JoinRoomModal from '@/components/room/JoinRoomModal';
+import DeleteRoomModal from '@/components/room/DeleteRoomModal';
 
 export default function RoomListPage() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [joinModalOpen, setJoinModalOpen] = useState(false);
-  const { setRoom } = useRoomStore();
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteRoomId, setDeleteRoomId] = useState<number | null>(null);
+  const queryClient = useQueryClient();
+  const { setRoom, clearUser } = useRoomStore();
+  const myNickname = useRoomStore((s) => s.myNickname);
   const navigate = useNavigate();
 
   const { data, isLoading } = useQuery({
@@ -21,14 +27,27 @@ export default function RoomListPage() {
     queryFn: () => api.get<Room[]>('/api/rooms').then((res) => res.data),
   });
 
-  const { data: me } = useQuery({
-    queryKey: ['me'],
-    queryFn: () => api.get<{ id: string; name: string }>('/auth/me').then((res) => res.data),
-  });
-
   const handleEnterRoom = (room: Room) => {
     setRoom(String(room.id), room.userRole, room.name);
     navigate(`/rooms/${room.id}`);
+  };
+
+  async function handleDeleteConfirm() {
+    if (deleteRoomId === null) return;
+    try {
+      await deleteRoom(deleteRoomId);
+      setDeleteModalOpen(false);
+      setDeleteRoomId(null);
+      queryClient.invalidateQueries({ queryKey: ['rooms'] });
+    } catch {
+      alert('강의룸 삭제에 실패했습니다. 다시 시도해주세요.');
+    }
+  }
+
+  const handleLogout = async () => {
+    await api.post('/api/auth/logout');
+    clearUser();
+    navigate('/login');
   };
 
   if (isLoading) return <Spinner size="xl" />;
@@ -44,14 +63,17 @@ export default function RoomListPage() {
           Goo<span className="text-accent-orange">Room</span>
         </span>
         <div className="ml-auto flex items-center gap-2">
-          {me && (
+          {myNickname && (
             <div className="flex items-center gap-2 bg-bg-card border border-border rounded-full px-3 py-1">
               <div className="w-6 h-6 rounded-full bg-accent-blue flex items-center justify-center text-[11px] font-bold text-white">
-                {me.name[0]}
+                {myNickname[0]}
               </div>
-              <span className="text-[13px] text-text-primary">{me.name}</span>
+              <span className="text-[13px] text-text-primary">{myNickname}</span>
             </div>
           )}
+          <Button onClick={handleLogout} colorPalette="secondary" variant="outline" size="sm">
+            로그아웃
+          </Button>
         </div>
       </header>
 
@@ -86,9 +108,22 @@ export default function RoomListPage() {
           className="grid gap-4"
           style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
         >
-          {data && data.length > 0 ? (
+          {Array.isArray(data) && data.length > 0 ? (
             data.map((room) => (
-              <RoomCard key={room.id} room={room} onClick={() => handleEnterRoom(room)} />
+              <RoomCard
+                key={room.id}
+                room={room}
+                onClick={() => handleEnterRoom(room)}
+                onDelete={
+                  room.userRole === 'OWNER'
+                    ? (e) => {
+                        e.stopPropagation();
+                        setDeleteRoomId(room.id);
+                        setDeleteModalOpen(true);
+                      }
+                    : undefined
+                }
+              />
             ))
           ) : (
             <div className="col-span-full flex flex-col items-center justify-center py-16 gap-3 text-text-dim text-center">
@@ -101,6 +136,11 @@ export default function RoomListPage() {
 
       <CreateRoomModal isOpen={createModalOpen} onIsOpenChange={setCreateModalOpen} />
       <JoinRoomModal isOpen={joinModalOpen} onIsOpenChange={setJoinModalOpen} />
+      <DeleteRoomModal
+        isOpen={deleteModalOpen}
+        onIsOpenChange={setDeleteModalOpen}
+        onConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

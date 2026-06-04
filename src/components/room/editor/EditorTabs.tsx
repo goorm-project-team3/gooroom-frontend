@@ -1,13 +1,6 @@
 import { useEditorStore } from '@/stores/editorStore';
+import { useFileTreeStore } from '@/stores/fileTreeStore';
 import { VscClose, VscFile } from 'react-icons/vsc';
-
-const FILE_NAMES: Record<string, string> = {
-  'file-1': 'main.tsx',
-  'file-2': 'App.tsx',
-  'file-3': 'button.tsx',
-  'file-4': 'index.html',
-  'file-5': 'package.json',
-};
 
 const getFileIconColor = (name: string): string => {
   const ext = name.split('.').pop();
@@ -32,6 +25,21 @@ const getFileIconColor = (name: string): string => {
 
 export default function EditorTabs() {
   const { openedFiles, activeFileId, setActiveFile, closeFile } = useEditorStore();
+  const { files } = useFileTreeStore();
+
+  const getFileName = (fileId: string): string => {
+    function findName(nodes: typeof files): string | null {
+      for (const node of nodes) {
+        if (node.id === fileId) return node.name;
+        if (node.children) {
+          const found = findName(node.children);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+    return findName(files) ?? fileId;
+  };
 
   if (openedFiles.length === 0) {
     return <div className="h-[35px] bg-bg-panel border-b border-border shrink-0" />;
@@ -40,7 +48,7 @@ export default function EditorTabs() {
   return (
     <div className="h-[35px] flex items-end bg-bg-panel border-b border-border shrink-0 overflow-x-auto overflow-y-clip">
       {openedFiles.map((fileId) => {
-        const name = FILE_NAMES[fileId] ?? fileId;
+        const name = getFileName(fileId);
         const isActive = activeFileId === fileId;
 
         return (

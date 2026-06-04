@@ -1,9 +1,17 @@
 import { useRoomStore } from '@/stores/roomStore';
+import { UnderstandingReactionRequest } from '@/types/understandingReaction';
 import { useEffect, useState } from 'react';
 
 const DISMISS_DELAY = 3000;
 
-export default function ReactionCard() {
+/**
+ * STOMP를 통해 이해도 반응 이벤트를 서버로 전송
+ */
+interface ReactionCardProps {
+  send: (request: UnderstandingReactionRequest) => void;
+}
+
+export default function ReactionCard({ send }: ReactionCardProps) {
   const {
     role,
     isReactionOpen,
@@ -33,6 +41,41 @@ export default function ReactionCard() {
 
   if (!visible) return null;
 
+  /**
+   * 이해도 반응 세션 시작 [OWNER]
+   * 로컬 즉시 반영 뒤 WS 이벤트 전송
+   */
+  function handleOpen() {
+    openReaction();
+    send({ type: 'OPEN' });
+  }
+
+  /**
+   * 이해도 반응 세션 종료 [OWNER]
+   */
+  function handleClose() {
+    closeReaction();
+    send({ type: 'CLOSE' });
+  }
+
+  /**
+   * 이해도 반응 초기화 [OWNER]
+   */
+  function handleReset() {
+    resetReaction();
+    send({ type: 'RESET' });
+  }
+
+  /**
+   * 이해도 반응 투표 [USER]
+   * @param reaction 선택한 투표 종류
+   */
+  function handleSubmit(reaction: 'understand' | 'confused') {
+    const next = myReaction === reaction ? null : reaction;
+    submitReaction(reaction);
+    send({ type: 'VOTE', reaction: next });
+  }
+
   return (
     <div className="mx-3 mt-2 mb-1 bg-bg-base border border-border rounded flex flex-col shrink-0 overflow-hidden">
       {/* 헤더 */}
@@ -42,7 +85,7 @@ export default function ReactionCard() {
           <div className="flex items-center gap-2">
             <button
               className="text-[11px] text-text-dim hover:text-accent-red transition-colors"
-              onClick={resetReaction}
+              onClick={handleReset}
             >
               초기화
             </button>
@@ -52,7 +95,7 @@ export default function ReactionCard() {
                   ? 'bg-bg-hover text-text-secondary hover:text-accent-red'
                   : 'bg-[#007acc] text-white hover:opacity-80'
               }`}
-              onClick={isReactionOpen ? closeReaction : openReaction}
+              onClick={isReactionOpen ? handleClose : handleOpen}
             >
               {isReactionOpen ? '종료' : '시작'}
             </button>
@@ -70,7 +113,7 @@ export default function ReactionCard() {
               ? 'border-accent-green bg-accent-green text-white'
               : 'border-border text-text-secondary hover:border-accent-green hover:text-accent-green disabled:hover:border-border disabled:hover:text-text-secondary disabled:cursor-default'
           }`}
-          onClick={() => submitReaction('understand')}
+          onClick={() => handleSubmit('understand')}
         >
           <span className="text-[20px]">✅</span>
           <span className="text-[11px] font-medium">이해했어요</span>
@@ -85,7 +128,7 @@ export default function ReactionCard() {
               ? 'border-accent-red bg-accent-red text-white'
               : 'border-border text-text-secondary hover:border-accent-red hover:text-accent-red disabled:hover:border-border disabled:hover:text-text-secondary disabled:cursor-default'
           }`}
-          onClick={() => submitReaction('confused')}
+          onClick={() => handleSubmit('confused')}
         >
           <span className="text-[20px]">❓</span>
           <span className="text-[11px] font-medium">잘 모르겠어요</span>

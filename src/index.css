@@ -44,3 +44,30 @@ body {
         opacity: 0;
     }
 }
+
+
+/* 스크롤바 전체 너비/높이 */
+
+ ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+
+/* 스크롤바 트랙 (배경) */
+
+ ::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+/* 스크롤바 thumb (손잡이) */
+
+ ::-webkit-scrollbar-thumb {
+    background: #4e4e52;
+    border-radius: 3px;
+}
+
+ ::-webkit-scrollbar-thumb:hover {
+    background: #6d6d6d;
+}
