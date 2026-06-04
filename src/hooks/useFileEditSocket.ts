@@ -79,6 +79,11 @@ export function useFileEditSocket(
   useEffect(() => {
     pendingSyncContentRef.current = null;
     isSyncingRef.current = false;
+    isSyncedRef.current = false;
+    if (resyncTimerRef.current) {
+      clearTimeout(resyncTimerRef.current);
+      resyncTimerRef.current = null;
+    }
   }, [fileId]);
 
   /** 파일 선택 시 sync 요청 + sync/edit 구독 */
@@ -194,7 +199,7 @@ export function useFileEditSocket(
 
       versionRef.current += 1;
 
-      // ack 대기 타이머 - 2초 내 본인 broadcast 없으면 re-sync
+      // ack 대기 타이머 - 1초 내 본인 broadcast 없으면 re-sync
       if (resyncTimerRef.current) clearTimeout(resyncTimerRef.current);
       resyncTimerRef.current = setTimeout(() => {
         resyncTimerRef.current = null;

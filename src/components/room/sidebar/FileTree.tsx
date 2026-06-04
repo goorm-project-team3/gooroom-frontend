@@ -389,12 +389,13 @@ export default function FileTree() {
   }, []);
 
   const handleRefresh = async () => {
-    if (isRefreshing) return;
+    if (isRefreshing || isCooldown || !roomId) return;
     setIsRefreshing(true);
     try {
       const res = await api.get(`/api/rooms/${roomId}/files`);
       setFilesFromServer(res.data);
       setIsCooldown(true);
+      if (cooldownTimerRef.current) clearTimeout(cooldownTimerRef.current);
       cooldownTimerRef.current = setTimeout(() => setIsCooldown(false), 3000);
     } catch (e) {
       console.error('파일 트리 새로고침 실패', e);

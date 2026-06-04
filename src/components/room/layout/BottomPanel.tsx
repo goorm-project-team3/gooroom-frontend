@@ -30,10 +30,10 @@ export default function BottomPanel() {
     (activeTab === 'owner' && sharedNote.isLoading) ||
     (activeTab === 'user' && personalNote.isLoading);
 
-  const currenntApiContent =
+  const currentApiContent =
     activeTab === 'owner' ? (sharedNote.data?.content ?? '') : (personalNote.data?.content ?? '');
 
-  const displayContent = draftContent ?? currenntApiContent;
+  const displayContent = draftContent ?? currentApiContent;
 
   useEffect(() => {
     return () => {

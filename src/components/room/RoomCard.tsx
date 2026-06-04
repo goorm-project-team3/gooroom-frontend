@@ -56,7 +56,11 @@ export default function RoomCard({ room, onClick, onDelete }: RoomCardProps) {
           <span>{room.participantCount}명</span>
         </div>
         {onDelete && (
-          <button onClick={onDelete} className="text-xs text-red-400 hover:text-red-300">
+          <button
+            onClick={onDelete}
+            className="text-xs text-red-400 hover:text-red-300"
+            type="button"
+          >
             삭제
           </button>
         )}
