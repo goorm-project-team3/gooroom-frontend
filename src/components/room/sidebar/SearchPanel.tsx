@@ -1,32 +1,38 @@
 import { useEditorStore } from '@/stores/editorStore';
-import { useState } from 'react';
+import { useFileTreeStore } from '@/stores/fileTreeStore';
+import { useMemo, useState } from 'react';
 import { VscFile, VscSearch } from 'react-icons/vsc';
+import type { FileNode } from '@/stores/fileTreeStore';
 
-interface FileResult {
-  id: string;
-  name: string;
-  path: string;
-  matches?: {
-    line: number;
-    text: string;
-  }[];
+function flattenFilesWithPaths(nodes: FileNode[], prefix = ''): (FileNode & { path: string })[] {
+  return nodes.flatMap((node) => {
+    const currentPath = prefix ? `${prefix}/${node.name}` : node.name;
+    if (node.type === 'file') return [{ ...node, path: currentPath }];
+    return flattenFilesWithPaths(node.children ?? [], currentPath);
+  });
 }
-
-const FLAT_FILES: FileResult[] = [
-  { id: 'file-1', name: 'main.tsx', path: 'src/main.tsx' },
-  { id: 'file-2', name: 'App.tsx', path: 'src/App.tsx' },
-  { id: 'file-3', name: 'button.tsx', path: 'src/components/button.tsx' },
-  { id: 'file-4', name: 'index.html', path: 'index.html' },
-  { id: 'file-5', name: 'package.json', path: 'package.json' },
-];
 
 export default function SearchPanel() {
   const [query, setQuery] = useState('');
   const { setActiveFile } = useEditorStore();
+  const files = useFileTreeStore((s) => s.files);
 
-  const results = query.trim()
-    ? FLAT_FILES.filter((file) => file.name.toLowerCase().includes(query.toLowerCase()))
-    : [];
+  const results = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+
+    return flattenFilesWithPaths(files)
+      .filter((f) => f.name.toLowerCase().includes(q) || f.content?.toLowerCase().includes(q))
+      .map((f) => {
+        const matches =
+          f.content
+            ?.split('\n')
+            .map((text, i) => ({ line: i + 1, text }))
+            .filter(({ text }) => text.toLowerCase().includes(q)) ?? [];
+
+        return { ...f, matches };
+      });
+  }, [query, files]);
 
   return (
     <div className="flex flex-col gap-2 p-2">

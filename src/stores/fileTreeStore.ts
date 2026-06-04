@@ -15,7 +15,12 @@ export interface FileNode {
 interface FileTreeStore {
   files: FileNode[];
   setFilesFromServer: (
-    serverFiles: Array<{ id: number; name: string; language: string | null }>,
+    serverFiles: Array<{
+      id: number;
+      name: string;
+      language: string | null;
+      content?: string | null;
+    }>,
   ) => void;
   addNode: (
     parentId: string | null,
@@ -27,7 +32,12 @@ interface FileTreeStore {
   getDescendantFileIds: (nodeId: string) => string[];
   moveNode: (nodeId: string, newParentId: string | null) => void;
   updateFileContent: (fileId: string, content: string) => void;
-  addFileFromServer: (serverFile: { id: number; name: string; language: string | null }) => void;
+  addFileFromServer: (serverFile: {
+    id: number;
+    name: string;
+    language: string | null;
+    content?: string | null;
+  }) => void;
 }
 
 /**
@@ -234,6 +244,7 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
         name: fileName,
         type: 'file',
         language: file.language ?? undefined,
+        content: file.content ?? undefined,
       });
     }
 
@@ -269,6 +280,7 @@ export const useFileTreeStore = create<FileTreeStore>((set, get) => ({
         name: fileName,
         type: 'file',
         language: serverFile.language ?? undefined,
+        content: serverFile.content ?? undefined,
       });
 
       return { files: root };
