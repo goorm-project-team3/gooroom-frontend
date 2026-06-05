@@ -1,16 +1,16 @@
 import React, { useState, useMemo } from 'react';
 
 export function SignupPage() {
-  // 1. 입력값 상태 관리 (원본 유지)
+  // 1. 입력값 상태 관리 (role 기본값 USER로 고정)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     username: '',
-    role: 'OWNER',
+    role: 'USER',
   });
 
-  // 2. 입력창 값 변경 핸들러 (원본 유지)
+  // 2. 입력창 값 변경 핸들러
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -18,7 +18,7 @@ export function SignupPage() {
     });
   };
 
-  // 3. 실시간 유효성 검사 (원본 유지: 6자~20자 체크)
+  // 3. 실시간 유효성 검사
   const { email, password, confirmPassword, username } = formData;
 
   const pwError = useMemo(() => {
@@ -39,12 +39,48 @@ export function SignupPage() {
     return !(isEmailValid && isPwValid && isPwMatch && isNameValid);
   }, [email, password, confirmPassword, username]);
 
-  // 4. 가입 버튼 클릭 시 실행 (원본 유지)
-  const handleSubmit = (e: React.FormEvent) => {
+  // 4. 가입 버튼 클릭 시 실행 (비동기 fetch 및 /api/auth/signup 연결)
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const signupData = { ...formData };
-    console.log('백엔드로 전송할 데이터:', signupData);
-    alert('회원가입 요청 성공!');
+    
+    // 백엔드로 보낼 데이터에서 '비밀번호 확인' 데이터 제외 처리
+    const { confirmPassword: _, ...backendData } = formData;
+
+    try {
+      // 요청하신 /api/auth/signup 주소로 POST 요청을 보냅니다.
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(backendData),
+      });
+
+      if (response.ok) {
+        alert('회원가입 요청 성공!');
+        // 필요시 로그인 페이지 등으로 리다이렉트 처리 가능합니다.
+        // window.location.href = '/login';
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(`회원가입 실패: ${errorData.message || '오류가 발생했습니다.'}`);
+      }
+    } catch (error) {
+      console.error('API 통신 에러:', error);
+      alert('서버와 통신하는 중 오류가 발생했습니다.');
+    }
+  };
+
+  // 5. 다크 모드 전용 포커스 이벤트 핸들러
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = '#3b82f6';
+    e.target.style.backgroundColor = '#1e293b'; // 포커스 시에도 다크 톤 유지
+    e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.25)';
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    e.target.style.borderColor = '#334155';
+    e.target.style.backgroundColor = '#1e293b';
+    e.target.style.boxShadow = 'none';
   };
 
   return (
@@ -53,8 +89,8 @@ export function SignupPage() {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        minHeight: '80vh',
-        backgroundColor: '#f8fafc',
+        minHeight: '100vh',
+        backgroundColor: '#111214', // 메인 페이지와 통일된 어두운 배경색
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
         letterSpacing: '-0.02em',
       }}
@@ -62,12 +98,13 @@ export function SignupPage() {
       <div
         className="p-6"
         style={{
-          background: '#ffffff',
+          background: '#1a1b1e', // 카드 컴포넌트 다크 배경색
           width: '100%',
           maxWidth: '440px',
           borderRadius: '16px',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05), 0 10px 15px -3px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #f1f5f9',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+          border: '1px solid #2a2b30',
+          padding: '32px 24px',
         }}
       >
         <h2
@@ -76,7 +113,7 @@ export function SignupPage() {
             marginBottom: '32px',
             fontSize: '24px',
             fontWeight: '700',
-            color: '#0f172a',
+            color: '#f8fafc',
           }}
         >
           회원가입
@@ -84,11 +121,11 @@ export function SignupPage() {
 
         <form
           onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}
         >
           {/* 이메일 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8' }}>
               이메일 계정
             </label>
             <input
@@ -105,8 +142,8 @@ export function SignupPage() {
           </div>
 
           {/* 비밀번호 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8' }}>
               비밀번호
             </label>
             <input
@@ -123,8 +160,8 @@ export function SignupPage() {
           </div>
 
           {/* 비밀번호 확인 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8' }}>
               비밀번호 확인
             </label>
             <input
@@ -140,119 +177,29 @@ export function SignupPage() {
             />
             {pwError && (
               <span
-                style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px', fontWeight: '500' }}
+                style={{ color: '#f87171', fontSize: '12px', marginTop: '6px', fontWeight: '500' }}
               >
                 {pwError}
               </span>
             )}
           </div>
 
-          {/* 이름 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>이름</label>
+          {/* 닉네임 */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '600', color: '#94a3b8' }}>
+              닉네임
+            </label>
             <input
               type="text"
               name="username"
               value={formData.username}
               onChange={handleChange}
-              placeholder="홍길동"
+              placeholder="닉네임을 입력해주세요"
               required
               style={inputStyle}
               onFocus={handleFocus}
               onBlur={handleBlur}
             />
-          </div>
-
-          {/* 역할 선택 - 이 부분을 시각적으로 잘 보이게 수정했습니다 */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: '600', color: '#475569' }}>역할</label>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '4px',
-                padding: '8px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '12px',
-                border: '1px solid #cbd5e1',
-              }}
-            >
-              {/* 강사 선택 영역 */}
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  transition: 'background 0.2s',
-                  backgroundColor: formData.role === 'OWNER' ? '#eff6ff' : 'transparent',
-                }}
-              >
-                <input
-                  type="radio"
-                  name="role"
-                  value="OWNER"
-                  checked={formData.role === 'OWNER'}
-                  onChange={handleChange}
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    cursor: 'pointer',
-                    accentColor: '#2563eb', // 파란색 점이 보이도록 설정
-                    appearance: 'auto', // 브라우저 기본 라디오 버튼 점 강제 노출
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: formData.role === 'OWNER' ? '700' : '500',
-                    color: formData.role === 'OWNER' ? '#1e40af' : '#334155',
-                  }}
-                >
-                  강사 (OWNER)
-                </span>
-              </label>
-
-              {/* 학생 선택 영역 */}
-              <label
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '12px',
-                  padding: '12px 16px',
-                  cursor: 'pointer',
-                  borderRadius: '8px',
-                  transition: 'background 0.2s',
-                  backgroundColor: formData.role === 'USER' ? '#eff6ff' : 'transparent',
-                }}
-              >
-                <input
-                  type="radio"
-                  name="role"
-                  value="USER"
-                  checked={formData.role === 'USER'}
-                  onChange={handleChange}
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    cursor: 'pointer',
-                    accentColor: '#2563eb', // 파란색 점이 보이도록 설정
-                    appearance: 'auto', // 브라우저 기본 라디오 버튼 점 강제 노출
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: '15px',
-                    fontWeight: formData.role === 'USER' ? '700' : '500',
-                    color: formData.role === 'USER' ? '#1e40af' : '#334155',
-                  }}
-                >
-                  학생 (USER)
-                </span>
-              </label>
-            </div>
           </div>
 
           <button
@@ -261,14 +208,14 @@ export function SignupPage() {
             style={{
               width: '100%',
               padding: '14px',
-              backgroundColor: isBtnDisabled ? '#e2e8f0' : '#2563eb',
-              color: isBtnDisabled ? '#94a3b8' : '#ffffff',
+              backgroundColor: isBtnDisabled ? '#2d3139' : '#2563eb',
+              color: isBtnDisabled ? '#64748b' : '#ffffff',
               border: 'none',
               borderRadius: '10px',
               fontSize: '16px',
               fontWeight: '600',
               cursor: isBtnDisabled ? 'not-allowed' : 'pointer',
-              marginTop: '8px',
+              marginTop: '12px',
               transition: 'all 0.2s ease',
             }}
           >
@@ -280,26 +227,14 @@ export function SignupPage() {
   );
 }
 
-// 헬퍼 함수들 (원본 유지)
-const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-  e.target.style.borderColor = '#3b82f6';
-  e.target.style.backgroundColor = '#ffffff';
-  e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.15)';
-};
-
-const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-  e.target.style.borderColor = '#cbd5e1';
-  e.target.style.backgroundColor = '#f8fafc';
-  e.target.style.boxShadow = 'none';
-};
-
+// 테마
 const inputStyle: React.CSSProperties = {
   padding: '13px 16px',
-  border: '1px solid #cbd5e1',
+  border: '1px solid #334155',
   borderRadius: '10px',
   fontSize: '15px',
-  color: '#334155',
+  color: '#f8fafc',
   outline: 'none',
-  backgroundColor: '#f8fafc',
+  backgroundColor: '#1e293b',
   transition: 'all 0.2s ease-in-out',
 };
